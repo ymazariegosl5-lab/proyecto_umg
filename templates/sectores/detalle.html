@@ -61,7 +61,7 @@
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table table-hover table-striped" id="tablaClientes">
+                        <table class="table table-hover table-striped table-bordered" id="tablaClientes">
                             <thead class="table-light">
                                 <tr>
                                     <th>ID</th>
@@ -165,19 +165,41 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Funcionalidad de búsqueda
-    const searchInput = document.getElementById('buscarCliente');
-    if (searchInput) {
-        searchInput.addEventListener('keyup', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#tablaClientes tbody tr');
-            
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
+$(document).ready(function() {
+    if ($('#tablaClientes').length) {
+        $('#tablaClientes').DataTable({
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+            },
+            responsive: true,
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+            order: [[4, 'desc']], // Ordenar por deuda descendente
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'excel',
+                    text: '<i class="bi bi-file-earmark-excel"></i> Excel',
+                    className: 'btn btn-success btn-sm'
+                },
+                {
+                    extend: 'pdf',
+                    text: '<i class="bi bi-file-earmark-pdf"></i> PDF',
+                    className: 'btn btn-danger btn-sm'
+                },
+                {
+                    extend: 'print',
+                    text: '<i class="bi bi-printer"></i> Imprimir',
+                    className: 'btn btn-info btn-sm'
+                }
+            ]
         });
+        
+        // Ocultar el campo de búsqueda manual ya que DataTables lo incluye
+        const buscarCliente = document.getElementById('buscarCliente');
+        if (buscarCliente) {
+            buscarCliente.parentElement.style.display = 'none';
+        }
     }
 });
 </script>

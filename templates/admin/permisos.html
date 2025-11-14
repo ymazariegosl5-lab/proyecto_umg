@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}Gestionar Permisos - {{ usuario.nombre }} {{ usuario.apellido }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-6 mb-2">
+                        <i class="bi bi-shield-check"></i> Gestionar Permisos
+                    </h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Inicio</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('listar_usuarios') }}">Usuarios</a></li>
+                            <li class="breadcrumb-item active">Permisos de {{ usuario.nombre }} {{ usuario.apellido }}</li>
+                        </ol>
+                    </nav>
+                </div>
+                <a href="{{ url_for('listar_usuarios') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver a Usuarios
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del Usuario -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card stat-card primary">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="mb-2">
+                                <i class="bi bi-person-circle"></i> {{ usuario.nombre }} {{ usuario.apellido }}
+                            </h4>
+                            <p class="text-muted mb-1">
+                                <i class="bi bi-envelope"></i> {{ usuario.correo_electronico }}
+                            </p>
+                            <p class="mb-0">
+                                <span class="badge bg-{% if usuario.rol == 'ADMIN' %}danger{% elif usuario.rol == 'TESORERO' %}success{% elif usuario.rol == 'LECTOR' %}primary{% else %}warning{% endif %}">
+                                    {{ usuario.rol }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="stat-card info">
+                                <h3 class="mb-0">{{ permisos_usuario|length }}</h3>
+                                <small class="text-muted">Permisos Asignados</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Permisos -->
+    <form method="POST" action="{{ url_for('actualizar_permisos_usuario', id_usuario=usuario.id_usuario) }}" id="formPermisos">
+        <div class="row">
+            {% for modulo, permisos in permisos_por_modulo.items() %}
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-{% if modulo == 'clientes' %}people{% elif modulo == 'lecturas' %}file-earmark-text{% elif modulo == 'pagos' %}cash-stack{% elif modulo == 'reportes' %}graph-up{% elif modulo == 'sectores' %}geo-alt{% elif modulo == 'usuarios' %}person-gear{% else %}gear{% endif %}"></i>
+                            {{ modulo|upper }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% for permiso in permisos %}
+                        <div class="permiso-card {% if permiso.tiene_permiso %}active{% endif %} mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       name="permisos" 
+                                       value="{{ permiso.id_permiso }}"
+                                       id="permiso_{{ permiso.id_permiso }}"
+                                       {% if permiso.tiene_permiso %}checked{% endif %}>
+                                <label class="form-check-label w-100" for="permiso_{{ permiso.id_permiso }}">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>{{ permiso.nombre_permiso }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <code>{{ permiso.codigo_permiso }}</code>
+                                            </small>
+                                            {% if permiso.descripcion %}
+                                            <br>
+                                            <small class="text-muted">{{ permiso.descripcion }}</small>
+                                            {% endif %}
+                                        </div>
+                                        {% if permiso.tiene_permiso %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> Activo
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <button type="button" class="btn btn-outline-primary" onclick="seleccionarTodos()">
+                                    <i class="bi bi-check-all"></i> Seleccionar Todos
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="deseleccionarTodos()">
+                                    <i class="bi bi-x-circle"></i> Deseleccionar Todos
+                                </button>
+                            </div>
+                            <div>
+                                <a href="{{ url_for('listar_usuarios') }}" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> Guardar Permisos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function seleccionarTodos() {
+    document.querySelectorAll('input[name="permisos"]').forEach(checkbox => {
+        checkbox.checked = true;
+        checkbox.closest('.permiso-card').classList.add('active');
+    });
+}
+
+function deseleccionarTodos() {
+    document.querySelectorAll('input[name="permisos"]').forEach(checkbox => {
+        checkbox.checked = false;
+        checkbox.closest('.permiso-card').classList.remove('active');
+    });
+}
+
+// Actualizar estado visual al cambiar checkboxes
+document.querySelectorAll('input[name="permisos"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        if (this.checked) {
+            this.closest('.permiso-card').classList.add('active');
+        } else {
+            this.closest('.permiso-card').classList.remove('active');
+        }
+    });
+});
+
+// Confirmar antes de enviar
+document.getElementById('formPermisos').addEventListener('submit', function(e) {
+    const permisosSeleccionados = document.querySelectorAll('input[name="permisos"]:checked').length;
+    
+    if (permisosSeleccionados === 0) {
+        e.preventDefault();
+        Swal.fire({
+            icon: 'warning',
+            title: '¿Sin permisos?',
+            text: 'El usuario no tendrá ningún permiso asignado. ¿Desea continuar?',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, continuar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                e.target.submit();
+            }
+        });
+    } else {
+        Swal.fire({
+            title: '¿Guardar cambios?',
+            text: `Se asignarán ${permisosSeleccionados} permiso(s) al usuario.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, guardar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (!result.isConfirmed) {
+                e.preventDefault();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+

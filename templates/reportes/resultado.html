@@ -57,7 +57,7 @@
                         {% if tipo == 'ingresos' %}
                         <!-- Reporte de Ingresos -->
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover">
+                            <table class="table table-striped table-hover table-bordered" id="tablaReporte">
                                 <thead class="table-dark">
                                     <tr>
                                         <th>Fecha</th>
@@ -86,7 +86,7 @@
                         {% elif tipo == 'morosos' %}
                         <!-- Reporte de Morosos -->
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover">
+                            <table class="table table-striped table-hover table-bordered" id="tablaReporte">
                                 <thead class="table-dark">
                                     <tr>
                                         <th>Cliente</th>
@@ -127,7 +127,7 @@
                         {% elif tipo == 'consumo' %}
                         <!-- Reporte de Consumo -->
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover">
+                            <table class="table table-striped table-hover table-bordered" id="tablaReporte">
                                 <thead class="table-dark">
                                     <tr>
                                         <th>Cliente</th>
@@ -182,9 +182,51 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+$(document).ready(function() {
+    if ($('#tablaReporte').length) {
+        $('#tablaReporte').DataTable({
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+            },
+            responsive: true,
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+            {% if tipo == 'ingresos' %}
+            order: [[0, 'desc']], // Ordenar por fecha descendente
+            {% elif tipo == 'morosos' %}
+            order: [[4, 'desc']], // Ordenar por deuda descendente
+            {% elif tipo == 'consumo' %}
+            order: [[3, 'desc']], // Ordenar por consumo promedio descendente
+            {% endif %}
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'excel',
+                    text: '<i class="bi bi-file-earmark-excel"></i> Excel',
+                    className: 'btn btn-success btn-sm',
+                    title: '{{ titulo }}'
+                },
+                {
+                    extend: 'pdf',
+                    text: '<i class="bi bi-file-earmark-pdf"></i> PDF',
+                    className: 'btn btn-danger btn-sm',
+                    title: '{{ titulo }}'
+                },
+                {
+                    extend: 'print',
+                    text: '<i class="bi bi-printer"></i> Imprimir',
+                    className: 'btn btn-info btn-sm',
+                    title: '{{ titulo }}'
+                }
+            ]
+        });
+    }
+});
+</script>
 <style>
 @media print {
-    .navbar, .breadcrumb, .btn, footer {
+    .navbar, .breadcrumb, .btn, footer, .dataTables_wrapper .dt-buttons {
         display: none !important;
     }
     .container {

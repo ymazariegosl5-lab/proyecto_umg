@@ -62,7 +62,7 @@
                 <div class="card-body">
                     {% if facturas %}
                     <div class="table-responsive">
-                        <table class="table table-hover table-striped" id="tablaFacturas">
+                        <table class="table table-hover table-striped table-bordered" id="tablaFacturas">
                             <thead class="table-light">
                                 <tr>
                                     <th>ID</th>
@@ -183,44 +183,77 @@
 {% block scripts %}
 <script>
 function confirmarPago(idLectura, nombreCliente, monto) {
-    // Actualizar información en el modal
-    document.getElementById('clienteNombre').textContent = nombreCliente;
-    document.getElementById('montoPago').textContent = monto.toFixed(2);
-    
-    // Establecer la acción del formulario
-    document.getElementById('formPago').action = "{{ url_for('registrar_pago', id_lectura=0) }}".replace('0', idLectura);
-    
-    // Mostrar el modal
-    const modal = new bootstrap.Modal(document.getElementById('modalPago'));
-    modal.show();
+    Swal.fire({
+        title: '¿Confirmar Pago?',
+        html: `
+            <div class="text-start">
+                <p><strong>Cliente:</strong> ${nombreCliente}</p>
+                <p><strong>Monto a pagar:</strong> <span class="text-success fw-bold">Q${monto.toFixed(2)}</span></p>
+            </div>
+            <p class="text-muted small mt-3">Esta acción marcará la factura como pagada y no se puede deshacer.</p>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#198754',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="bi bi-check-circle"></i> Confirmar Pago',
+        cancelButtonText: '<i class="bi bi-x-circle"></i> Cancelar',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Crear formulario dinámico para enviar el pago
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{{ url_for('registrar_pago', id_lectura=0) }}".replace('0', idLectura);
+            
+            // Agregar token CSRF si existe
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (csrfToken) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = csrfToken.content;
+                form.appendChild(csrfInput);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
 }
 
-// Agregar funcionalidad de búsqueda/filtro
-document.addEventListener('DOMContentLoaded', function() {
-    // Agregar campo de búsqueda
-    const cardHeader = document.querySelector('.card-header.bg-success');
-    if (cardHeader && document.querySelectorAll('#tablaFacturas tbody tr').length > 0) {
-        const searchDiv = document.createElement('div');
-        searchDiv.className = 'mt-2';
-        searchDiv.innerHTML = `
-            <input type="text" 
-                   class="form-control form-control-sm" 
-                   id="buscarFactura" 
-                   placeholder="Buscar por cliente, contador o sector...">
-        `;
-        cardHeader.parentElement.querySelector('.card-body').insertBefore(searchDiv, cardHeader.parentElement.querySelector('.table-responsive'));
-        
-        // Funcionalidad de búsqueda
-        document.getElementById('buscarFactura').addEventListener('keyup', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#tablaFacturas tbody tr');
-            
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
-        });
-    }
+// Inicializar DataTables
+$(document).ready(function() {
+    $('#tablaFacturas').DataTable({
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+        },
+        responsive: true,
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+        order: [[7, 'desc']], // Ordenar por días de mora descendente
+        dom: 'Bfrtip',
+        buttons: [
+            {
+                extend: 'excel',
+                text: '<i class="bi bi-file-earmark-excel"></i> Excel',
+                className: 'btn btn-success btn-sm'
+            },
+            {
+                extend: 'pdf',
+                text: '<i class="bi bi-file-earmark-pdf"></i> PDF',
+                className: 'btn btn-danger btn-sm'
+            },
+            {
+                extend: 'print',
+                text: '<i class="bi bi-printer"></i> Imprimir',
+                className: 'btn btn-info btn-sm'
+            }
+        ],
+        columnDefs: [
+            { orderable: false, targets: [8] } // Deshabilitar ordenamiento en columna de acciones
+        ]
+    });
 });
 </script>
 {% endblock %}

@@ -1,59 +1,92 @@
 {% extends "base.html" %}
 {% block title %}Iniciar Sesión{% endblock %}
 
+{% block extra_css %}
+<style>
+    body.login-page {
+        overflow: hidden;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="col-md-6 col-lg-4">
+{% if not session.logged_in %}
+<div class="login-wrapper">
+    <div class="login-card animate-fade-in">
         <div class="text-center mb-4">
-            <i class="bi bi-droplet-fill text-primary" style="font-size: 4rem;"></i>
-            <h2 class="mt-3">Sistema de control y Gestión de Agua</h2>
-            <p class="text-muted">Aldea Corinto San Lorenzo S.M</p>
+            <img src="{{ url_for('static', filename='img/logo.png') }}" 
+                 alt="Logo Aldea Corinto" 
+                 class="logo-login mb-3"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <i class="bi bi-droplet-fill" style="font-size: 4rem; display: none; color: white;"></i>
+            <h2 class="mt-3 fw-bold" style="color: white; text-shadow: 2px 2px 4px rgba(11,11,11,0.3);">Sistema de Gestión de Agua</h2>
+            <p class="mb-4" style="color: rgba(255,255,255,0.9); font-weight: 500;">Aldea Corinto San Lorenzo S.M</p>
         </div>
         
-        <div class="card shadow">
-            <div class="card-body p-4">
-                <h4 class="card-title text-center mb-4">Iniciar Sesión</h4>
-                
-                <form method="POST" action="{{ url_for('login') }}">
-                    <div class="mb-3">
-                        <label for="usuario" class="form-label">
-                            <i class="bi bi-envelope"></i> Correo Electrónico
-                        </label>
-                        <input type="email" 
-                               class="form-control" 
-                               id="usuario" 
-                               name="usuario" 
-                               placeholder="usuario@ejemplo.com" 
-                               required 
-                               autofocus>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="contrasena" class="form-label">
-                            <i class="bi bi-lock"></i> Contraseña
-                        </label>
-                        <input type="password" 
-                               class="form-control" 
-                               id="contrasena" 
-                               name="contrasena" 
-                               placeholder="Ingrese su contraseña" 
-                               required>
-                    </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="bi bi-box-arrow-in-right"></i> Ingresar
-                        </button>
-                    </div>
-                </form>
+        <form method="POST" action="{{ url_for('login') }}" id="loginForm">
+            <div class="form-group mb-3">
+                <label for="usuario" class="form-label" style="color: #1e293b; font-weight: 600;">
+                    <i class="bi bi-envelope"></i> Correo Electrónico
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-person"></i>
+                    </span>
+                    <input type="email" 
+                           class="form-control" 
+                           id="usuario" 
+                           name="usuario" 
+                           placeholder="usuario@ejemplo.com" 
+                           required 
+                           autofocus>
+                </div>
             </div>
-        </div>
+            
+            <div class="form-group mb-4">
+                <label for="contrasena" class="form-label" style="color: #1e293b; font-weight: 600;">
+                    <i class="bi bi-lock"></i> Contraseña
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-key"></i>
+                    </span>
+                    <input type="password" 
+                           class="form-control" 
+                           id="contrasena" 
+                           name="contrasena" 
+                           placeholder="Ingrese su contraseña" 
+                           required>
+                </div>
+            </div>
+            
+            <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                </button>
+            </div>
+        </form>
         
-        <div class="text-center mt-3">
-            <small class="text-muted">
+        <div class="text-center">
+            <small class="text-muted" style="font-weight: 500;">
                 <i class="bi bi-shield-check"></i> Acceso seguro protegido
             </small>
         </div>
     </div>
 </div>
+{% else %}
+<div class="container-fluid py-4">
+    <div class="alert alert-info">
+        Ya has iniciado sesión. <a href="{{ url_for('dashboard') }}">Ir al Dashboard</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if not session.logged_in %}
+<script>
+    // Agregar clase al body para ocultar navbar solo en login
+    document.body.classList.add('login-page');
+</script>
+{% endif %}
 {% endblock %}

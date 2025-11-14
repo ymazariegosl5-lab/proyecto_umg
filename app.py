@@ -41,6 +41,79 @@ def get_db_connection():
         flash("Error de conexión a la base de datos.", "danger")
         return None
 
+# --- Funciones de Gestión de Permisos ---
+def tiene_permiso(id_usuario, codigo_permiso):
+    """Verifica si un usuario tiene un permiso específico"""
+    conn = get_db_connection()
+    if conn is None:
+        return False
+    
+    try:
+        cursor = conn.cursor(dictionary=True)
+        # Verificar si el usuario es ADMIN (tiene todos los permisos)
+        cursor.execute("SELECT rol FROM usuario WHERE id_usuario = %s AND activo = TRUE", (id_usuario,))
+        usuario = cursor.fetchone()
+        
+        if usuario and usuario['rol'] == 'ADMIN':
+            cursor.close()
+            conn.close()
+            return True
+        
+        # Verificar permiso específico
+        cursor.execute("""
+            SELECT COUNT(*) as tiene_permiso
+            FROM usuario_permiso up
+            JOIN permiso p ON up.id_permiso = p.id_permiso
+            WHERE up.id_usuario = %s 
+            AND p.codigo_permiso = %s
+            AND p.activo = TRUE
+        """, (id_usuario, codigo_permiso))
+        
+        resultado = cursor.fetchone()
+        tiene = resultado['tiene_permiso'] > 0
+        
+        cursor.close()
+        conn.close()
+        return tiene
+    except Exception as e:
+        print(f"Error al verificar permiso: {e}")
+        if conn:
+            conn.close()
+        return False
+
+def obtener_permisos_usuario(id_usuario):
+    """Obtiene todos los permisos de un usuario"""
+    conn = get_db_connection()
+    if conn is None:
+        return []
+    
+    try:
+        cursor = conn.cursor(dictionary=True)
+        # Si es ADMIN, retornar todos los permisos
+        cursor.execute("SELECT rol FROM usuario WHERE id_usuario = %s", (id_usuario,))
+        usuario = cursor.fetchone()
+        
+        if usuario and usuario['rol'] == 'ADMIN':
+            cursor.execute("SELECT codigo_permiso FROM permiso WHERE activo = TRUE")
+            permisos = [row['codigo_permiso'] for row in cursor.fetchall()]
+        else:
+            cursor.execute("""
+                SELECT p.codigo_permiso
+                FROM usuario_permiso up
+                JOIN permiso p ON up.id_permiso = p.id_permiso
+                WHERE up.id_usuario = %s AND p.activo = TRUE
+            """, (id_usuario,))
+            permisos = [row['codigo_permiso'] for row in cursor.fetchall()]
+        
+        cursor.close()
+        conn.close()
+        return permisos
+    except Exception as e:
+        print(f"Error al obtener permisos: {e}")
+        if conn:
+            conn.close()
+        return []
+
 # --- Decoradores de Seguridad (R2: Gestión de roles y permisos) ---
 def login_required(f):
     @wraps(f)
@@ -68,6 +141,23 @@ def roles_required(*roles):
             if 'rol' not in session or session['rol'] not in roles:
                 flash("No tienes permisos para acceder a esta sección.", "danger")
                 return redirect(url_for('dashboard'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+def permiso_required(codigo_permiso):
+    """Decorador para verificar si el usuario tiene un permiso específico"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user_id' not in session:
+                flash("Necesitas iniciar sesión para acceder.", "warning")
+                return redirect(url_for('login'))
+            
+            if not tiene_permiso(session['user_id'], codigo_permiso):
+                flash(f"No tienes permiso para realizar esta acción. Se requiere: {codigo_permiso}", "danger")
+                return redirect(url_for('dashboard'))
+            
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -133,6 +223,8 @@ def login():
             session['user_id'] = user['id_usuario']
             session['rol'] = user['rol']
             session['nombre'] = f"{user['nombre']} {user['apellido']}"
+            # Cargar permisos del usuario en la sesión
+            session['permisos'] = obtener_permisos_usuario(user['id_usuario'])
             flash(f"Bienvenido, {user['nombre']} ({user['rol']})", "success")
             return redirect(url_for('dashboard'))
         else:
@@ -1189,6 +1281,111 @@ def cambiar_password_usuario(id_usuario):
     return render_template('admin/cambiar_password.html', usuario=usuario)
 
 
+# --- RUTAS DE GESTIÓN DE PERMISOS ---
+
+@app.route('/admin/usuarios/<int:id_usuario>/permisos', methods=['GET'])
+@login_required
+@admin_required
+def gestionar_permisos_usuario(id_usuario):
+    """Gestionar permisos de un usuario específico"""
+    conn = get_db_connection()
+    if conn is None:
+        flash("Error de conexión a la base de datos.", "danger")
+        return redirect(url_for('listar_usuarios'))
+    
+    cursor = conn.cursor(dictionary=True)
+    
+    # Obtener información del usuario
+    cursor.execute("SELECT id_usuario, nombre, apellido, correo_electronico, rol FROM usuario WHERE id_usuario = %s", (id_usuario,))
+    usuario = cursor.fetchone()
+    
+    if not usuario:
+        flash("Usuario no encontrado.", "danger")
+        cursor.close()
+        conn.close()
+        return redirect(url_for('listar_usuarios'))
+    
+    # Obtener todos los permisos agrupados por módulo
+    cursor.execute("""
+        SELECT id_permiso, codigo_permiso, nombre_permiso, descripcion, modulo
+        FROM permiso
+        WHERE activo = TRUE
+        ORDER BY modulo, nombre_permiso
+    """)
+    todos_permisos = cursor.fetchall()
+    
+    # Obtener permisos del usuario
+    cursor.execute("""
+        SELECT p.id_permiso, p.codigo_permiso
+        FROM usuario_permiso up
+        JOIN permiso p ON up.id_permiso = p.id_permiso
+        WHERE up.id_usuario = %s AND p.activo = TRUE
+    """, (id_usuario,))
+    permisos_usuario = {row['id_permiso']: row['codigo_permiso'] for row in cursor.fetchall()}
+    
+    # Agrupar permisos por módulo
+    permisos_por_modulo = {}
+    for permiso in todos_permisos:
+        modulo = permiso['modulo']
+        if modulo not in permisos_por_modulo:
+            permisos_por_modulo[modulo] = []
+        permiso['tiene_permiso'] = permiso['id_permiso'] in permisos_usuario
+        permisos_por_modulo[modulo].append(permiso)
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('admin/permisos.html', 
+                         usuario=usuario, 
+                         permisos_por_modulo=permisos_por_modulo,
+                         permisos_usuario=permisos_usuario)
+
+
+@app.route('/admin/usuarios/<int:id_usuario>/permisos', methods=['POST'])
+@login_required
+@admin_required
+def actualizar_permisos_usuario(id_usuario):
+    """Actualizar permisos de un usuario"""
+    conn = get_db_connection()
+    if conn is None:
+        flash("Error de conexión a la base de datos.", "danger")
+        return redirect(url_for('listar_usuarios'))
+    
+    cursor = conn.cursor()
+    
+    try:
+        # Obtener permisos seleccionados del formulario
+        permisos_seleccionados = request.form.getlist('permisos')
+        
+        # Eliminar todos los permisos actuales del usuario
+        cursor.execute("DELETE FROM usuario_permiso WHERE id_usuario = %s", (id_usuario,))
+        
+        # Insertar nuevos permisos
+        if permisos_seleccionados:
+            valores = [(id_usuario, int(permiso_id), session['user_id']) for permiso_id in permisos_seleccionados]
+            cursor.executemany("""
+                INSERT INTO usuario_permiso (id_usuario, id_permiso, asignado_por)
+                VALUES (%s, %s, %s)
+            """, valores)
+        
+        conn.commit()
+        flash(f"Permisos actualizados exitosamente.", "success")
+        
+    except mysql.connector.Error as err:
+        flash(f"Error al actualizar permisos: {err}", "danger")
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
+    
+    return redirect(url_for('gestionar_permisos_usuario', id_usuario=id_usuario))
+
+
+
+
 # --- Ejecución de la Aplicación ---
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug, host='0.0.0.0', port=port)

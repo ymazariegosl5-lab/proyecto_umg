@@ -1,4 +1,6 @@
-Flask
-mysql-connector-python
-werkzeug
+Flask==3.0.0
+mysql-connector-python==8.2.0
+werkzeug==3.0.1
 reportlab==4.0.7
+python-dotenv==1.0.0
+gunicorn==21.2.0

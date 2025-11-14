@@ -1,38 +1,124 @@
-/* Estilos personalizados para el Sistema de Gestión de Agua Potable */
+/* Estilos personalizados para el Sistema de Gestión de Agua Potable - Versión Profesional */
 
-/* Variables de colores */
+/* Variables de colores - Paleta azul profesional */
 :root {
-    --primary-color: #0d6efd;
-    --secondary-color: #6c757d;
-    --success-color: #198754;
-    --danger-color: #dc3545;
-    --warning-color: #ffc107;
-    --info-color: #0dcaf0;
-    --light-color: #f8f9fa;
-    --dark-color: #212529;
+    /* Colores principales azules */
+    --primary-color: #2563eb;       /* Azul primario */
+    --primary-dark: #1e40af;        /* Azul oscuro */
+    --primary-light: #3b82f6;       /* Azul claro */
+    --secondary-color: #64748b;     /* Gris azulado */
+    --success-color: #10b981;       /* Verde esmeralda */
+    --success-dark: #059669;        /* Verde oscuro */
+    --success-light: #34d399;       /* Verde claro */
+    --danger-color: #ef4444;        /* Rojo */
+    --danger-dark: #dc2626;         /* Rojo oscuro */
+    --warning-color: #f59e0b;       /* Naranja/Ámbar */
+    --warning-dark: #d97706;        /* Naranja oscuro */
+    --info-color: #06b6d4;          /* Cian */
+    --info-dark: #0891b2;           /* Cian oscuro */
+    --light-color: #f8fafc;         /* Gris muy claro */
+    --dark-color: #1e293b;          /* Gris azulado oscuro */
+    
+    /* Colores adicionales */
+    --color-light-gray: #F2F2F2;    /* Gris muy claro */
+    --color-dark: #0B0B0B;          /* Negro casi puro */
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    
+    /* Sombras profesionales */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    
+    /* Espaciado */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    
+    /* Bordes */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1.5rem;
+    
+    /* Transiciones */
+    --transition-fast: 150ms ease-in-out;
+    --transition-base: 200ms ease-in-out;
+    --transition-slow: 300ms ease-in-out;
 }
 
-/* Estilos generales */
+/* Logo Styles */
+.logo-navbar {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+}
+
+.logo-login {
+    max-width: 150px;
+    height: auto;
+    margin: 0 auto;
+    display: block;
+}
+
+/* Estilos generales - Diseño profesional */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f6f9;
+    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    background: linear-gradient(135deg, var(--color-light-gray) 0%, #e0e0e0 100%);
+    background-attachment: fixed;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    color: var(--color-dark);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ocultar navbar en página de login */
+body.login-page .navbar {
+    display: none !important;
+}
+
+body.login-page .container-fluid {
+    padding: 0 !important;
 }
 
 .container-fluid {
     flex: 1;
 }
 
-/* Navbar personalizado */
+/* Navbar personalizado - Diseño profesional azul */
 .navbar {
-    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%) !important;
+    padding: 1rem 1.5rem;
+    backdrop-filter: blur(10px);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .navbar-brand {
     font-weight: 600;
     font-size: 1.3rem;
+    transition: transform 0.3s ease;
+}
+
+.navbar-brand:hover {
+    transform: scale(1.05);
 }
 
 .nav-link {
@@ -43,22 +129,47 @@ body {
     transform: translateY(-2px);
 }
 
-/* Cards */
+/* Cards - Diseño profesional mejorado */
 .card {
     border: none;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    margin-bottom: 20px;
+    border-radius: var(--radius-xl);
+    transition: all var(--transition-slow);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    background: white;
+    position: relative;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--info-color), var(--primary-light));
+    opacity: 0;
+    transition: opacity var(--transition-base);
 }
 
 .card:hover {
-    box-shadow: 0 4px 15px rgba(0,0,0,.1);
+    box-shadow: var(--shadow-xl);
+    transform: translateY(-4px);
+}
+
+.card:hover::before {
+    opacity: 1;
 }
 
 .card-header {
-    border-bottom: 2px solid rgba(0,0,0,.1);
-    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
     font-weight: 600;
+    border-bottom: none;
+    padding: 1.25rem 1.5rem;
+    font-size: 1.1rem;
+    letter-spacing: 0.3px;
 }
 
 /* Botones */
@@ -82,6 +193,8 @@ body {
 /* Tablas */
 .table {
     background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .table thead th {
@@ -90,15 +203,46 @@ body {
     text-transform: uppercase;
     font-size: 0.85rem;
     letter-spacing: 0.5px;
+    background-color: #f8f9fa;
+    color: #495057;
 }
 
 .table-hover tbody tr:hover {
-    background-color: rgba(0,0,0,.02);
+    background-color: rgba(13, 110, 253, 0.05);
     cursor: pointer;
+    transition: background-color 0.2s ease;
 }
 
 .table-striped tbody tr:nth-of-type(odd) {
     background-color: rgba(0,0,0,.02);
+}
+
+/* DataTables Custom Styles */
+.dataTables_wrapper {
+    padding: 1rem;
+}
+
+.dataTables_filter input {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    padding: 0.5rem;
+    margin-left: 0.5rem;
+}
+
+.dataTables_length select {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    padding: 0.5rem;
+    margin: 0 0.5rem;
+}
+
+.dt-buttons {
+    margin-bottom: 1rem;
+}
+
+.dt-buttons .btn {
+    margin-right: 0.5rem;
+    border-radius: 5px;
 }
 
 /* Badges */
@@ -140,7 +284,17 @@ body {
 
 /* Login Page */
 .card.shadow {
-    box-shadow: 0 10px 30px rgba(0,0,0,.1) !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,.15) !important;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.login-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Dashboard Cards */
@@ -156,9 +310,10 @@ body {
 /* Footer */
 .footer {
     margin-top: auto;
-    padding: 1rem 0;
-    background-color: #f8f9fa;
-    border-top: 1px solid #dee2e6;
+    padding: 1.5rem 0;
+    background: linear-gradient(135deg, var(--light-color), #e8f0f8);
+    border-top: 2px solid rgba(37, 99, 235, 0.2);
+    box-shadow: 0 -2px 8px rgba(11, 11, 11, 0.1);
 }
 
 /* Progress bars */
@@ -181,6 +336,11 @@ body {
 .breadcrumb-item a {
     color: var(--primary-color);
     text-decoration: none;
+    font-weight: 500;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--primary-dark);
 }
 
 .breadcrumb-item a:hover {
@@ -351,7 +511,7 @@ code {
 .text-gradient {
     background: linear-gradient(45deg, var(--primary-color), var(--info-color));
     -webkit-background-clip: text;
-    background-clip: text;  /* Agregar esta línea */
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -365,4 +525,613 @@ code {
 
 .border-radius-xl {
     border-radius: 20px !important;
+}
+
+/* SweetAlert2 Custom Styles */
+.swal2-popup {
+    border-radius: 15px !important;
+}
+
+.swal2-toast {
+    border-radius: 10px !important;
+}
+
+/* Loading Spinner */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* Animaciones mejoradas */
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeInUp 0.5s ease;
+}
+
+.navbar {
+    animation: slideInDown 0.5s ease;
+}
+
+/* Badge mejorado */
+.badge {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+    border-radius: 6px;
+    font-size: 0.85em;
+}
+
+/* Botones mejorados */
+.btn {
+    border-radius: 8px;
+    padding: 0.6rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Form controls mejorados */
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    transform: scale(1.02);
+}
+
+/* Alert mejorado */
+.alert {
+    border-radius: 10px;
+    border-left: 4px solid;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.alert-success {
+    border-left-color: var(--success-color);
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), white);
+}
+
+.alert-danger {
+    border-left-color: var(--danger-color);
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), white);
+}
+
+.alert-warning {
+    border-left-color: var(--warning-color);
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.1), white);
+}
+
+.alert-info {
+    border-left-color: var(--info-color);
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.1), white);
+}
+
+/* ============================================
+   MEJORAS PROFESIONALES ADICIONALES
+   ============================================ */
+
+/* Sidebar mejorado para navegación */
+.sidebar-nav {
+    background: white;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    padding: var(--spacing-md);
+}
+
+.sidebar-nav .nav-link {
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.25rem;
+    transition: all var(--transition-base);
+    color: var(--gray-700);
+    font-weight: 500;
+}
+
+.sidebar-nav .nav-link:hover {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary-color);
+    transform: translateX(4px);
+}
+
+.sidebar-nav .nav-link.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+
+/* Estadísticas cards mejoradas */
+.stat-card {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-slow);
+    border-left: 4px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(30px, -30px);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+}
+
+.stat-card.primary {
+    border-left-color: var(--primary-color);
+}
+
+.stat-card.success {
+    border-left-color: var(--success-color);
+}
+
+.stat-card.warning {
+    border-left-color: var(--warning-color);
+}
+
+.stat-card.danger {
+    border-left-color: var(--danger-color);
+}
+
+.stat-card.info {
+    border-left-color: var(--info-color);
+}
+
+/* Mejoras en formularios */
+.form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-control, .form-select {
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    transition: all var(--transition-base);
+    font-size: 0.95rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    transform: translateY(-1px);
+}
+
+/* Input groups mejorados */
+.input-group-text {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    border: 2px solid var(--primary-color);
+    border-right: none;
+    color: white;
+    font-weight: 600;
+}
+
+.input-group .form-control {
+    border-left: none;
+}
+
+.input-group .form-control:focus {
+    border-left: 2px solid var(--primary-color);
+}
+
+/* Tablas mejoradas profesionalmente */
+.table {
+    background: white;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.table thead {
+    background: linear-gradient(135deg, var(--gray-50), var(--gray-100));
+}
+
+.table thead th {
+    border-bottom: 2px solid var(--gray-200);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    color: var(--gray-700);
+    padding: 1rem;
+}
+
+.table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.table-hover tbody tr {
+    transition: all var(--transition-fast);
+}
+
+.table-hover tbody tr:hover {
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.05), transparent);
+    transform: scale(1.01);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Badges mejorados */
+.badge {
+    padding: 0.5em 0.9em;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Botones mejorados profesionalmente */
+.btn {
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    border: 2px solid transparent;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+    border-color: var(--primary-dark);
+    color: white;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success-color), var(--success-light));
+    border-color: var(--success-color);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, var(--success-dark), var(--success-color));
+    border-color: var(--success-dark);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger-color), #f87171);
+    border-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, var(--danger-dark), var(--danger-color));
+    border-color: var(--danger-dark);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, var(--warning-color), #fbbf24);
+    border-color: var(--warning-color);
+    color: white;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, var(--warning-dark), var(--warning-color));
+    border-color: var(--warning-dark);
+}
+
+/* Modal mejorado */
+.modal-content {
+    border-radius: var(--radius-xl);
+    border: none;
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    padding: var(--spacing-lg);
+    border-bottom: none;
+}
+
+.modal-body {
+    padding: var(--spacing-xl);
+}
+
+.modal-footer {
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--gray-200);
+    background: var(--gray-50);
+}
+
+/* Permisos UI */
+.permiso-card {
+    background: white;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    transition: all var(--transition-base);
+    cursor: pointer;
+}
+
+.permiso-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.permiso-card.active {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), white);
+}
+
+.permiso-card .form-check-input:checked {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+/* Loading states mejorados */
+.loading-skeleton {
+    background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s ease-in-out infinite;
+    border-radius: var(--radius-md);
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Mejoras en el dashboard */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+/* Mejoras en breadcrumbs */
+.breadcrumb {
+    background: white;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    color: var(--gray-400);
+    font-weight: bold;
+}
+
+/* Mejoras en página de login - Separado de la barra */
+.login-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 50%, var(--info-color) 100%);
+    position: relative;
+    overflow: hidden;
+    padding: 2rem;
+}
+
+.login-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(37, 99, 235, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(6, 182, 212, 0.15) 0%, transparent 50%);
+    opacity: 1;
+}
+
+.login-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.3;
+}
+
+.login-card {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: var(--radius-2xl);
+    box-shadow: 0 20px 60px rgba(11, 11, 11, 0.4);
+    padding: var(--spacing-2xl);
+    max-width: 450px;
+    width: 100%;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.login-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, var(--primary-color), var(--info-color), var(--primary-light));
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+}
+
+/* Mejoras en tooltips */
+.tooltip {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+}
+
+/* Mejoras en paginación */
+.pagination .page-link {
+    border-radius: var(--radius-md);
+    margin: 0 0.25rem;
+    border: 2px solid var(--gray-200);
+    color: var(--gray-700);
+    font-weight: 500;
+    transition: all var(--transition-base);
+}
+
+.pagination .page-link:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    border-color: var(--primary-color);
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+
+/* Scrollbar mejorado */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--gray-100);
+    border-radius: var(--radius-md);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    border-radius: var(--radius-md);
+    border: 2px solid var(--color-light-gray);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+}
+
+/* Animaciones suaves */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-slide-in {
+    animation: slideInRight 0.5s ease-out;
+}
+
+.animate-fade-in {
+    animation: fadeInScale 0.4s ease-out;
+}
+
+/* Mejoras en responsive */
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .card {
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .stat-card {
+        padding: var(--spacing-md);
+    }
 }
