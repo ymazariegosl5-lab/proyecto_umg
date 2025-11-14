@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6">
+                <i class="bi bi-file-earmark-bar-graph"></i> {{ titulo }}
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('generador_reportes') }}">Reportes</a></li>
+                    <li class="breadcrumb-item active">Resultado</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Información del Reporte -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong><i class="bi bi-calendar"></i> Período:</strong> 
+                            {{ fecha_inicio }} al {{ fecha_fin }}
+                        </div>
+                        <div class="col-md-4">
+                            <strong><i class="bi bi-clock"></i> Generado:</strong> 
+                            {{ now().strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+                        <div class="col-md-4">
+                            <strong><i class="bi bi-list-ol"></i> Registros:</strong> 
+                            {{ datos|length }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultados del Reporte -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Resultados</h5>
+                    <button onclick="window.print()" class="btn btn-light btn-sm">
+                        <i class="bi bi-printer"></i> Imprimir
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if datos %}
+                        {% if tipo == 'ingresos' %}
+                        <!-- Reporte de Ingresos -->
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th class="text-end">Monto Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% set total = namespace(value=0) %}
+                                    {% for registro in datos %}
+                                    <tr>
+                                        <td>{{ registro.fecha.strftime('%d/%m/%Y') }}</td>
+                                        <td class="text-end"><strong>Q{{ "%.2f"|format(registro.total) }}</strong></td>
+                                    </tr>
+                                    {% set total.value = total.value + registro.total %}
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td><strong>TOTAL INGRESOS</strong></td>
+                                        <td class="text-end"><strong class="text-success">Q{{ "%.2f"|format(total.value) }}</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        {% elif tipo == 'morosos' %}
+                        <!-- Reporte de Morosos -->
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Contador</th>
+                                        <th>Sector</th>
+                                        <th class="text-center">Facturas Pendientes</th>
+                                        <th class="text-end">Deuda Total</th>
+                                        <th>Fecha Más Antigua</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% set total_deuda = namespace(value=0) %}
+                                    {% set total_facturas = namespace(value=0) %}
+                                    {% for registro in datos %}
+                                    <tr>
+                                        <td><strong>{{ registro.nombre }} {{ registro.apellido }}</strong></td>
+                                        <td><code>{{ registro.no_contador }}</code></td>
+                                        <td><span class="badge bg-info">{{ registro.nombre_sector }}</span></td>
+                                        <td class="text-center"><span class="badge bg-warning">{{ registro.facturas_pendientes }}</span></td>
+                                        <td class="text-end"><strong class="text-danger">Q{{ "%.2f"|format(registro.deuda_total) }}</strong></td>
+                                        <td>{{ registro.fecha_mas_antigua.strftime('%d/%m/%Y') }}</td>
+                                    </tr>
+                                    {% set total_deuda.value = total_deuda.value + registro.deuda_total %}
+                                    {% set total_facturas.value = total_facturas.value + registro.facturas_pendientes %}
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="3"><strong>TOTALES</strong></td>
+                                        <td class="text-center"><strong>{{ total_facturas.value }}</strong></td>
+                                        <td class="text-end"><strong class="text-danger">Q{{ "%.2f"|format(total_deuda.value) }}</strong></td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        {% elif tipo == 'consumo' %}
+                        <!-- Reporte de Consumo -->
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Contador</th>
+                                        <th>Sector</th>
+                                        <th class="text-end">Consumo Promedio</th>
+                                        <th class="text-end">Consumo Máximo</th>
+                                        <th class="text-end">Consumo Mínimo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for registro in datos %}
+                                    <tr>
+                                        <td><strong>{{ registro.nombre }} {{ registro.apellido }}</strong></td>
+                                        <td><code>{{ registro.no_contador }}</code></td>
+                                        <td><span class="badge bg-info">{{ registro.nombre_sector }}</span></td>
+                                        <td class="text-end">{{ "%.2f"|format(registro.consumo_promedio) }} m³</td>
+                                        <td class="text-end">{{ "%.2f"|format(registro.consumo_maximo) }} m³</td>
+                                        <td class="text-end">{{ "%.2f"|format(registro.consumo_minimo) }} m³</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> 
+                        No se encontraron datos para el período seleccionado.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <a href="{{ url_for('generador_reportes') }}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Generar Otro Reporte
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-house"></i> Volver al Dashboard
+            </a>
+            <button onclick="window.print()" class="btn btn-success float-end">
+                <i class="bi bi-printer"></i> Imprimir Reporte
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+@media print {
+    .navbar, .breadcrumb, .btn, footer {
+        display: none !important;
+    }
+    .container {
+        max-width: 100% !important;
+    }
+}
+</style>
+{% endblock %}

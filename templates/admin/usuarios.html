@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6">
+                <i class="bi bi-people-fill"></i> Gestión de Usuarios
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Inicio</a></li>
+                    <li class="breadcrumb-item active">Usuarios</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Botón para crear nuevo usuario -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="{{ url_for('nuevo_usuario_form') }}" class="btn btn-primary">
+                <i class="bi bi-person-plus-fill"></i> Crear Nuevo Usuario
+            </a>
+        </div>
+    </div>
+
+    <!-- Lista de usuarios -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-list"></i> Usuarios del Sistema</h5>
+                </div>
+                <div class="card-body">
+                    {% if usuarios %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre Completo</th>
+                                    <th>Correo Electrónico</th>
+                                    <th>Rol</th>
+                                    <th>Estado</th>
+                                    <th>Fecha Creación</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for usuario in usuarios %}
+                                <tr>
+                                    <td><span class="badge bg-secondary">#{{ usuario.id_usuario }}</span></td>
+                                    <td>
+                                        <strong>{{ usuario.nombre }} {{ usuario.apellido }}</strong>
+                                        {% if usuario.id_usuario == session.user_id %}
+                                        <span class="badge bg-info">Tú</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ usuario.correo_electronico }}</td>
+                                    <td>
+                                        {% if usuario.rol == 'ADMIN' %}
+                                        <span class="badge bg-danger">{{ usuario.rol }}</span>
+                                        {% elif usuario.rol == 'LECTOR' %}
+                                        <span class="badge bg-primary">{{ usuario.rol }}</span>
+                                        {% elif usuario.rol == 'TESORERO' %}
+                                        <span class="badge bg-success">{{ usuario.rol }}</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">{{ usuario.rol }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if usuario.activo %}
+                                        <span class="badge bg-success">Activo</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ usuario.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <!-- Cambiar contraseña -->
+                                            <a href="{{ url_for('cambiar_password_usuario', id_usuario=usuario.id_usuario) }}" 
+                                               class="btn btn-sm btn-warning"
+                                               title="Cambiar Contraseña">
+                                                <i class="bi bi-key"></i>
+                                            </a>
+                                            
+                                            <!-- Activar/Desactivar -->
+                                            {% if usuario.id_usuario != session.user_id %}
+                                            <form method="POST" 
+                                                  action="{{ url_for('toggle_usuario', id_usuario=usuario.id_usuario) }}"
+                                                  style="display: inline;"
+                                                  onsubmit="return confirm('¿Está seguro de cambiar el estado de este usuario?')">
+                                                {% if usuario.activo %}
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Desactivar">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                                {% else %}
+                                                <button type="submit" class="btn btn-sm btn-success" title="Activar">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                                {% endif %}
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> No hay usuarios registrados
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información de roles -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-info-circle"></i> Descripción de Roles</h6>
+                    <ul class="mb-0">
+                        <li><strong>ADMIN:</strong> Acceso completo al sistema, puede crear usuarios y gestionar todo</li>
+                        <li><strong>LECTOR:</strong> Puede registrar lecturas y gestionar pagos</li>
+                        <li><strong>TESORERO:</strong> Acceso a reportes financieros y gestión de pagos</li>
+                        <li><strong>PRESIDENTE:</strong> Acceso de solo lectura a reportes y estadísticas</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

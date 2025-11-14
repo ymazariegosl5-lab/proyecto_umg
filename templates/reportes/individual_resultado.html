@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}Reporte de {{ cliente.nombre }} {{ cliente.apellido }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6">
+                <i class="bi bi-person-badge"></i> Reporte Individual
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('generador_reportes') }}">Reportes</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('reporte_individual_form') }}">Individual</a></li>
+                    <li class="breadcrumb-item active">{{ cliente.nombre }} {{ cliente.apellido }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Información del Cliente -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-circle"></i> Información del Cliente</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Nombre:</strong> {{ cliente.nombre }} {{ cliente.apellido }}</p>
+                            <p><strong>No. Contador:</strong> <code>{{ cliente.no_contador }}</code></p>
+                            <p><strong>Sector:</strong> <span class="badge bg-info">{{ cliente.nombre_sector }}</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Teléfono:</strong> {{ cliente.telefono or 'No registrado' }}</p>
+                            <p><strong>Estado:</strong> 
+                                {% if cliente.activo %}
+                                <span class="badge bg-success">Activo</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inactivo</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Fecha Registro:</strong> {{ cliente.fecha_registro.strftime('%d/%m/%Y') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h4 class="text-info">{{ estadisticas.total_lecturas }}</h4>
+                    <p class="mb-0 text-muted small">Total Lecturas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h4 class="text-primary">{{ "%.2f"|format(estadisticas.consumo_promedio) }} m³</h4>
+                    <p class="mb-0 text-muted small">Consumo Promedio</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h4 class="text-success">Q{{ "%.2f"|format(estadisticas.total_pagado) }}</h4>
+                    <p class="mb-0 text-muted small">Total Pagado</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <h4 class="text-danger">Q{{ "%.2f"|format(estadisticas.deuda_total) }}</h4>
+                    <p class="mb-0 text-muted small">Deuda Actual</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Facturas Pendientes -->
+    {% if facturas_pendientes %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Facturas Pendientes ({{ facturas_pendientes|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Fecha Lectura</th>
+                                    <th>Consumo</th>
+                                    <th>Monto</th>
+                                    <th>Días Mora</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for factura in facturas_pendientes %}
+                                <tr>
+                                    <td>{{ factura.fecha_lectura.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ "%.2f"|format(factura.consumo_m3) }} m³</td>
+                                    <td>Q{{ "%.2f"|format(factura.monto_total) }}</td>
+                                    <td>
+                                        {% if factura.dias_mora > 60 %}
+                                        <span class="badge bg-danger">{{ factura.dias_mora }} días</span>
+                                        {% elif factura.dias_mora > 30 %}
+                                        <span class="badge bg-warning text-dark">{{ factura.dias_mora }} días</span>
+                                        {% else %}
+                                        <span class="badge bg-info">{{ factura.dias_mora }} días</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Historial de Lecturas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Historial de Lecturas</h5>
+                </div>
+                <div class="card-body">
+                    {% if lecturas %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Lectura Anterior</th>
+                                    <th>Lectura Actual</th>
+                                    <th>Consumo</th>
+                                    <th>Monto</th>
+                                    <th>Estado</th>
+                                    <th>Lector</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lectura in lecturas %}
+                                <tr>
+                                    <td>{{ lectura.fecha_lectura.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ "%.2f"|format(lectura.lectura_anterior) }} m³</td>
+                                    <td>{{ "%.2f"|format(lectura.lectura_actual) }} m³</td>
+                                    <td><strong>{{ "%.2f"|format(lectura.consumo_m3) }} m³</strong></td>
+                                    <td>Q{{ "%.2f"|format(lectura.monto_total) }}</td>
+                                    <td>
+                                        {% if lectura.estado_pago == 'PAGADO' %}
+                                        <span class="badge bg-success">Pagado</span>
+                                        {% else %}
+                                        <span class="badge bg-warning text-dark">Pendiente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><small>{{ lectura.lector }}</small></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No hay lecturas registradas</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de Pagos -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-cash-coin"></i> Historial de Pagos</h5>
+                </div>
+                <div class="card-body">
+                    {% if pagos %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha Pago</th>
+                                    <th>Período (Lectura)</th>
+                                    <th>Consumo</th>
+                                    <th>Monto Pagado</th>
+                                    <th>Receptor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pago in pagos %}
+                                <tr>
+                                    <td>{{ pago.fecha_pago.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>{{ pago.fecha_lectura.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ "%.2f"|format(pago.consumo_m3) }} m³</td>
+                                    <td><strong class="text-success">Q{{ "%.2f"|format(pago.monto_pagado) }}</strong></td>
+                                    <td><small>{{ pago.receptor }}</small></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No hay pagos registrados</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="row">
+        <div class="col-12">
+            <a href="{{ url_for('reporte_individual_form') }}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Ver Otro Cliente
+            </a>
+            <a href="{{ url_for('generador_reportes') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver a Reportes
+            </a>
+            <button onclick="window.print()" class="btn btn-success float-end">
+                <i class="bi bi-printer"></i> Imprimir Reporte
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+@media print {
+    .navbar, .breadcrumb, .btn, footer {
+        display: none !important;
+    }
+    .container {
+        max-width: 100% !important;
+    }
+}
+</style>
+{% endblock %}

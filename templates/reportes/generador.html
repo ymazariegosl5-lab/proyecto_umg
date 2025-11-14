@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Generador de Reportes{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6">
+                <i class="bi bi-graph-up"></i> Generador de Reportes
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Inicio</a></li>
+                    <li class="breadcrumb-item active">Reportes</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="bi bi-file-bar-graph"></i> Seleccione el Tipo de Reporte</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('generar_reporte') }}" id="formReporte">
+                        <div class="mb-4">
+                            <label class="form-label"><strong>Tipo de Reporte <span class="text-danger">*</span></strong></label>
+                            
+                            <div class="list-group">
+                                <label class="list-group-item">
+                                    <input class="form-check-input me-2" type="radio" name="tipo_reporte" value="ingresos" required>
+                                    <div>
+                                        <strong><i class="bi bi-currency-dollar text-success"></i> Reporte de Ingresos</strong>
+                                        <p class="mb-0 text-muted small">Muestra los ingresos diarios por pagos recibidos en un rango de fechas</p>
+                                    </div>
+                                </label>
+
+                                <label class="list-group-item">
+                                    <input class="form-check-input me-2" type="radio" name="tipo_reporte" value="morosos">
+                                    <div>
+                                        <strong><i class="bi bi-exclamation-triangle text-danger"></i> Reporte de Clientes Morosos</strong>
+                                        <p class="mb-0 text-muted small">Lista de clientes con facturas pendientes de pago y monto total adeudado</p>
+                                    </div>
+                                </label>
+
+                                <label class="list-group-item">
+                                    <input class="form-check-input me-2" type="radio" name="tipo_reporte" value="consumo">
+                                    <div>
+                                        <strong><i class="bi bi-droplet text-info"></i> Reporte de Consumo de Agua</strong>
+                                        <p class="mb-0 text-muted small">Estadísticas de consumo promedio, máximo y mínimo por cliente</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4" id="rangoFechas">
+                            <div class="col-md-6">
+                                <label for="fecha_inicio" class="form-label"><strong>Fecha Inicio <span class="text-danger">*</span></strong></label>
+                                <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="fecha_fin" class="form-label"><strong>Fecha Fin <span class="text-danger">*</span></strong></label>
+                                <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" required>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="bi bi-file-earmark-bar-graph"></i> Generar Reporte
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <!-- Botón para reporte individual -->
+                    <div class="text-center">
+                        <p class="text-muted mb-2">O genere un reporte individual:</p>
+                        <a href="{{ url_for('reporte_individual_form') }}" class="btn btn-info btn-lg">
+                            <i class="bi bi-person-lines-fill"></i> Reporte Individual por Cliente
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de ayuda -->
+            <div class="card mt-3 border-info">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-info-circle"></i> Información sobre los Reportes</h6>
+                    <ul class="mb-0 small">
+                        <li><strong>Reporte de Ingresos:</strong> Útil para el control de caja y flujo de efectivo</li>
+                        <li><strong>Reporte de Morosos:</strong> Identifica clientes con deudas para seguimiento</li>
+                        <li><strong>Reporte de Consumo:</strong> Analiza patrones de consumo y detecta anomalías</li>
+                        <li><strong>Reporte Individual:</strong> Historial completo de un cliente específico</li>
+                        <li>Todos los reportes pueden ser impresos o exportados</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Establecer fechas por defecto (último mes)
+    const hoy = new Date();
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    
+    document.getElementById('fecha_fin').value = hoy.toISOString().split('T')[0];
+    document.getElementById('fecha_inicio').value = inicioMes.toISOString().split('T')[0];
+    
+    // Validar que fecha inicio no sea mayor que fecha fin
+    document.getElementById('formReporte').addEventListener('submit', function(e) {
+        const inicio = new Date(document.getElementById('fecha_inicio').value);
+        const fin = new Date(document.getElementById('fecha_fin').value);
+        
+        if (inicio > fin) {
+            e.preventDefault();
+            alert('La fecha de inicio no puede ser mayor que la fecha de fin');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

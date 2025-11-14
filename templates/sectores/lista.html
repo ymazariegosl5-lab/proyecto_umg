@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Sectores{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6">
+                <i class="bi bi-geo-alt-fill"></i> Gestión de Sectores
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Inicio</a></li>
+                    <li class="breadcrumb-item active">Sectores</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Estadísticas Generales -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-geo"></i> Total Sectores</h6>
+                    <h3>{{ sectores|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-people"></i> Total Clientes</h6>
+                    <h3>{{ sectores|sum(attribute='total_clientes') }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-exclamation-triangle"></i> Clientes con Mora</h6>
+                    <h3>{{ sectores|sum(attribute='clientes_morosos') }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Sectores -->
+    <div class="row">
+        {% for sector in sectores %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 hover-shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-geo-alt-fill"></i> {{ sector.nombre_sector }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if sector.descripcion %}
+                    <p class="card-text text-muted">{{ sector.descripcion }}</p>
+                    {% endif %}
+                    
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <div class="border rounded p-2">
+                                <h4 class="text-primary mb-0">{{ sector.total_clientes }}</h4>
+                                <small class="text-muted">Clientes</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2">
+                                <h4 class="text-warning mb-0">{{ sector.clientes_morosos }}</h4>
+                                <small class="text-muted">Con Mora</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if sector.total_clientes > 0 %}
+                    <div class="progress" style="height: 25px;">
+                        {% set porcentaje_mora = (sector.clientes_morosos / sector.total_clientes * 100) if sector.total_clientes > 0 else 0 %}
+                        <div class="progress-bar bg-success" 
+                             style="width: {{ 100 - porcentaje_mora }}%"
+                             title="{{ '%.1f'|format(100 - porcentaje_mora) }}% al día">
+                            {{ '%.0f'|format(100 - porcentaje_mora) }}%
+                        </div>
+                        <div class="progress-bar bg-warning" 
+                             style="width: {{ porcentaje_mora }}%"
+                             title="{{ '%.1f'|format(porcentaje_mora) }}% con mora">
+                            {{ '%.0f'|format(porcentaje_mora) }}%
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-1 text-center">Estado de pagos</small>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('ver_clientes_sector', id_sector=sector.id_sector) }}" 
+                       class="btn btn-info text-white w-100">
+                        <i class="bi bi-list-ul"></i> Ver Clientes
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not sectores %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No hay sectores registrados en el sistema.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+.hover-shadow:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-5px);
+}
+</style>
+{% endblock %}

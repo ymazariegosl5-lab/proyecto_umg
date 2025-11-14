@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Registrar Cliente{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6">
+                <i class="bi bi-person-plus-fill"></i> Registrar Nuevo Cliente
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Inicio</a></li>
+                    <li class="breadcrumb-item active">Registrar Cliente</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Formulario de Registro -->
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-plus"></i> Formulario de Registro</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('registrar_cliente') }}">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="nombre" 
+                                   name="nombre" 
+                                   placeholder="Ej: María" 
+                                   required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="apellido" class="form-label">Apellido <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="apellido" 
+                                   name="apellido" 
+                                   placeholder="Ej: González" 
+                                   required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_sector" class="form-label">Sector <span class="text-danger">*</span></label>
+                            <select class="form-select" id="id_sector" name="id_sector" required>
+                                <option value="">Seleccione un sector...</option>
+                                {% for sector in sectores %}
+                                <option value="{{ sector.id_sector }}">{{ sector.nombre_sector }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="telefono" 
+                                   name="telefono" 
+                                   placeholder="Ej: 5555-1234"
+                                   pattern="[0-9]{4}-[0-9]{4}">
+                            <small class="form-text text-muted">Formato: 1234-5678</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="no_contador" class="form-label">No. de Contador <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="no_contador" 
+                                   name="no_contador" 
+                                   placeholder="Ej: CNT-001" 
+                                   required>
+                            <small class="form-text text-muted">Debe ser único</small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-save"></i> Registrar Cliente
+                            </button>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Clientes Recientes -->
+        <div class="col-lg-7">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-people"></i> Clientes Registrados Recientemente</h5>
+                </div>
+                <div class="card-body">
+                    {% if clientes_recientes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Sector</th>
+                                    <th>No. Contador</th>
+                                    <th>Teléfono</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cliente in clientes_recientes %}
+                                <tr>
+                                    <td><span class="badge bg-secondary">{{ cliente.id_cliente }}</span></td>
+                                    <td>{{ cliente.nombre }} {{ cliente.apellido }}</td>
+                                    <td><span class="badge bg-info">{{ cliente.nombre_sector }}</span></td>
+                                    <td><code>{{ cliente.no_contador }}</code></td>
+                                    <td>{{ cliente.telefono or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> No hay clientes registrados aún
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Información de Ayuda -->
+            <div class="card mt-3 border-warning">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-lightbulb"></i> Información Importante</h6>
+                    <ul class="mb-0 small">
+                        <li>El número de contador debe ser único para cada cliente</li>
+                        <li>Todos los campos marcados con <span class="text-danger">*</span> son obligatorios</li>
+                        <li>El teléfono es opcional pero recomendado para contacto</li>
+                        <li>Asegúrese de seleccionar el sector correcto</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

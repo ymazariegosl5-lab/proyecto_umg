@@ -1,0 +1,4 @@
+Flask
+mysql-connector-python
+werkzeug
+reportlab==4.0.7

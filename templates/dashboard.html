@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5">
+                <i class="bi bi-speedometer2"></i> Panel de Control
+            </h1>
+            <p class="lead">Bienvenido, <strong>{{ session.nombre }}</strong> ({{ session.rol }})</p>
+        </div>
+    </div>
+
+    <!-- Tarjetas de Estadísticas -->
+    <div class="row g-4 mb-4">
+       <!-- TARJETA: Registrar Cliente - Solo ADMIN -->
+        {% if session.rol == 'ADMIN' %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 hover-shadow">
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-person-plus-fill text-primary" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title text-center">Registrar Nuevo Cliente</h5>
+                    <p class="card-text text-center text-muted flex-grow-1">
+                        Agregar nuevos abonados al sistema de agua potable
+                    </p>
+                    <a href="{{ url_for('registrar_cliente') }}" class="btn btn-primary w-100 mt-auto">
+                        <i class="bi bi-plus-circle"></i> Registrar
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- TARJETA: Registrar Lecturas - ADMIN, LECTOR, TESORERO -->
+        {% if session.rol in ['ADMIN', 'LECTOR', 'TESORERO'] %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 hover-shadow">
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-file-earmark-text-fill text-info" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title text-center">Registrar Lecturas</h5>
+                    <p class="card-text text-center text-muted flex-grow-1">
+                        Registrar lecturas mensuales y generar facturas automáticamente
+                    </p>
+                    <a href="{{ url_for('registro_lectura') }}" class="btn btn-info text-white w-100 mt-auto">
+                        <i class="bi bi-journal-text"></i> Lecturas
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- TARJETA: Gestionar Pagos - Solo ADMIN y TESORERO -->
+        {% if session.rol in ['ADMIN', 'TESORERO'] %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 hover-shadow">
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-cash-stack text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title text-center">Gestionar Pagos</h5>
+                    <p class="card-text text-center text-muted flex-grow-1">
+                        Registrar pagos y consultar facturas pendientes
+                    </p>
+                    <a href="{{ url_for('ver_facturas_pendientes') }}" class="btn btn-success w-100 mt-auto">
+                        <i class="bi bi-wallet2"></i> Pagos
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- TARJETA: Generar Reportes - ADMIN, TESORERO, PRESIDENTE -->
+        {% if session.rol in ['ADMIN', 'TESORERO', 'PRESIDENTE'] %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 hover-shadow">
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-graph-up text-warning" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title text-center">Generar Reportes</h5>
+                    <p class="card-text text-center text-muted flex-grow-1">
+                        Consultar reportes de ingresos, consumo y morosidad
+                    </p>
+                    <a href="{{ url_for('generador_reportes') }}" class="btn btn-warning w-100 mt-auto">
+                        <i class="bi bi-file-bar-graph"></i> Reportes
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- TARJETA: Clientes por Sector - TODOS los roles -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 hover-shadow">
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-geo-alt-fill text-danger" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title text-center">Clientes por Sector</h5>
+                    <p class="card-text text-center text-muted flex-grow-1">
+                        Ver distribución de clientes organizados por sectores
+                    </p>
+                    <a href="{{ url_for('ver_sectores') }}" class="btn btn-danger w-100 mt-auto">
+                        <i class="bi bi-map"></i> Ver Sectores
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- TARJETA: Gestionar Usuarios - Solo ADMIN -->
+        {% if session.rol == 'ADMIN' %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 hover-shadow">
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-people-fill text-secondary" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title text-center">Gestionar Usuarios</h5>
+                    <p class="card-text text-center text-muted flex-grow-1">
+                        Crear, editar y administrar usuarios del sistema
+                    </p>
+                    <a href="{{ url_for('listar_usuarios') }}" class="btn btn-secondary w-100 mt-auto">
+                        <i class="bi bi-gear"></i> Administrar
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- TARJETA: Cerrar Sesión - TODOS los roles -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 hover-shadow border-secondary">
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-box-arrow-right text-secondary" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title text-center">Cerrar Sesión</h5>
+                    <p class="card-text text-center text-muted flex-grow-1">
+                        Salir del sistema de forma segura
+                    </p>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary w-100 mt-auto">
+                        <i class="bi bi-power"></i> Salir
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <i class="bi bi-currency-dollar text-danger" style="font-size: 3rem;"></i>
+                    <h3 class="mt-3">Q{{ "%.2f"|format(stats.monto_pendiente) }}</h3>
+                    <p class="text-muted mb-0">Por Cobrar</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <i class="bi bi-geo-alt-fill text-info" style="font-size: 3rem;"></i>
+                    <h3 class="mt-3">{{ stats.total_sectores }}</h3>
+                    <p class="text-muted mb-0">Sectores</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menú de Opciones Principales -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3"><i class="bi bi-grid"></i> Accesos Rápidos</h3>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% if session.rol == 'ADMIN' %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 hover-shadow">
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-person-plus-fill text-primary" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title text-center">Registrar Nuevo Cliente</h5>
+                    <p class="card-text text-center text-muted flex-grow-1">
+                        Agregar nuevos abonados al sistema de agua potable
+                    </p>
+                    <a href="{{ url_for('registrar_cliente') }}" class="btn btn-primary w-100 mt-auto">
+                        <i class="bi bi-plus-circle"></i> Registrar
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 hover-shadow">
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-file-earmark-text-fill text-info" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title text-center">Registrar Lecturas</h5>
+                    <p class="card-text text-center text-muted flex-grow-1">
+                        Registrar lecturas mensuales y generar facturas automáticamente
+                    </p>
+                    <a href="{{ url_for('registro_lectura') }}" class="btn btn-info text-white w-100 mt-auto">
+                        <i class="bi bi-journal-text"></i> Lecturas
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 hover-shadow">
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-cash-stack text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title text-center">Gestionar Pagos</h5>
+                    <p class="card-text text-center text-muted flex-grow-1">
+                        Registrar pagos y consultar facturas pendientes
+                    </p>
+                    <a href="{{ url_for('ver_facturas_pendientes') }}" class="btn btn-success w-100 mt-auto">
+                        <i class="bi bi-wallet2"></i> Pagos
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 hover-shadow">
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-graph-up text-warning" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title text-center">Generar Reportes</h5>
+                    <p class="card-text text-center text-muted flex-grow-1">
+                        Consultar reportes de ingresos, consumo y morosidad
+                    </p>
+                    <a href="{{ url_for('generador_reportes') }}" class="btn btn-warning w-100 mt-auto">
+                        <i class="bi bi-file-bar-graph"></i> Reportes
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 hover-shadow">
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-geo-alt-fill text-danger" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title text-center">Clientes por Sector</h5>
+                    <p class="card-text text-center text-muted flex-grow-1">
+                        Ver distribución de clientes organizados por sectores
+                    </p>
+                    <a href="{{ url_for('ver_sectores') }}" class="btn btn-danger w-100 mt-auto">
+                        <i class="bi bi-map"></i> Ver Sectores
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% if session.rol == 'ADMIN' %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 hover-shadow">
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-people-fill text-secondary" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title text-center">Gestionar Usuarios</h5>
+                    <p class="card-text text-center text-muted flex-grow-1">
+                        Crear, editar y administrar usuarios del sistema
+                    </p>
+                    <a href="{{ url_for('listar_usuarios') }}" class="btn btn-secondary w-100 mt-auto">
+                        <i class="bi bi-gear"></i> Administrar
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 hover-shadow border-secondary">
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-box-arrow-right text-secondary" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title text-center">Cerrar Sesión</h5>
+                    <p class="card-text text-center text-muted flex-grow-1">
+                        Salir del sistema de forma segura
+                    </p>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary w-100 mt-auto">
+                        <i class="bi bi-power"></i> Salir
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+.hover-shadow:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-5px);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}Gestión de Pagos{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6">
+                <i class="bi bi-cash-stack"></i> Gestión de Pagos y Facturas
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Inicio</a></li>
+                    <li class="breadcrumb-item active">Gestión de Pagos</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Estadísticas Rápidas -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-file-earmark-excel"></i> Total Facturas Pendientes
+                    </h6>
+                    <h3>{{ facturas|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-currency-dollar"></i> Monto Total Por Cobrar
+                    </h6>
+                    <h3>Q{{ "%.2f"|format(facturas|sum(attribute='monto_total')) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-clock-history"></i> Promedio Días Mora
+                    </h6>
+                    <h3>{{ "%.0f"|format(facturas|sum(attribute='dias_mora') / (facturas|length or 1)) }} días</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Facturas Pendientes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-list-check"></i> Facturas Pendientes de Pago</h5>
+                    <span class="badge bg-light text-dark">{{ facturas|length }} facturas</span>
+                </div>
+                <div class="card-body">
+                    {% if facturas %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped" id="tablaFacturas">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Cliente</th>
+                                    <th>No. Contador</th>
+                                    <th>Sector</th>
+                                    <th>Fecha Lectura</th>
+                                    <th>Consumo</th>
+                                    <th>Monto</th>
+                                    <th>Días Mora</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for factura in facturas %}
+                                <tr class="{% if factura.dias_mora > 60 %}table-danger{% elif factura.dias_mora > 30 %}table-warning{% endif %}">
+                                    <td><span class="badge bg-secondary">#{{ factura.id_lectura }}</span></td>
+                                    <td>
+                                        <strong>{{ factura.nombre }} {{ factura.apellido }}</strong>
+                                    </td>
+                                    <td><code>{{ factura.no_contador }}</code></td>
+                                    <td><span class="badge bg-info">{{ factura.nombre_sector }}</span></td>
+                                    <td>{{ factura.fecha_lectura.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ "%.2f"|format(factura.consumo_m3) }} m³</td>
+                                    <td><strong class="text-success">Q{{ "%.2f"|format(factura.monto_total) }}</strong></td>
+                                    <td>
+                                        {% if factura.dias_mora > 60 %}
+                                        <span class="badge bg-danger">{{ factura.dias_mora }} días</span>
+                                        {% elif factura.dias_mora > 30 %}
+                                        <span class="badge bg-warning text-dark">{{ factura.dias_mora }} días</span>
+                                        {% else %}
+                                        <span class="badge bg-info">{{ factura.dias_mora }} días</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" 
+                                                class="btn btn-success btn-sm" 
+                                                onclick="confirmarPago({{ factura.id_lectura }}, '{{ factura.nombre }} {{ factura.apellido }}', {{ factura.monto_total }})">
+                                            <i class="bi bi-check-circle"></i> Registrar Pago
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="6" class="text-end"><strong>TOTAL A COBRAR:</strong></td>
+                                    <td colspan="3"><strong class="text-success">Q{{ "%.2f"|format(facturas|sum(attribute='monto_total')) }}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle-fill"></i> 
+                        <strong>¡Excelente!</strong> No hay facturas pendientes de pago.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leyenda -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-info-circle"></i> Leyenda de Colores</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <span class="badge bg-info">Normal</span> Menos de 30 días
+                        </div>
+                        <div class="col-md-4">
+                            <span class="badge bg-warning text-dark">Advertencia</span> 31-60 días
+                        </div>
+                        <div class="col-md-4">
+                            <span class="badge bg-danger">Crítico</span> Más de 60 días
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Pago -->
+<div class="modal fade" id="modalPago" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-cash"></i> Confirmar Pago</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formPago" method="POST">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <strong>Cliente:</strong> <span id="clienteNombre"></span><br>
+                        <strong>Monto a pagar:</strong> Q<span id="montoPago"></span>
+                    </div>
+                    <p>¿Está seguro de que desea registrar este pago?</p>
+                    <p class="text-muted small">Esta acción marcará la factura como pagada y no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Confirmar Pago
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmarPago(idLectura, nombreCliente, monto) {
+    // Actualizar información en el modal
+    document.getElementById('clienteNombre').textContent = nombreCliente;
+    document.getElementById('montoPago').textContent = monto.toFixed(2);
+    
+    // Establecer la acción del formulario
+    document.getElementById('formPago').action = "{{ url_for('registrar_pago', id_lectura=0) }}".replace('0', idLectura);
+    
+    // Mostrar el modal
+    const modal = new bootstrap.Modal(document.getElementById('modalPago'));
+    modal.show();
+}
+
+// Agregar funcionalidad de búsqueda/filtro
+document.addEventListener('DOMContentLoaded', function() {
+    // Agregar campo de búsqueda
+    const cardHeader = document.querySelector('.card-header.bg-success');
+    if (cardHeader && document.querySelectorAll('#tablaFacturas tbody tr').length > 0) {
+        const searchDiv = document.createElement('div');
+        searchDiv.className = 'mt-2';
+        searchDiv.innerHTML = `
+            <input type="text" 
+                   class="form-control form-control-sm" 
+                   id="buscarFactura" 
+                   placeholder="Buscar por cliente, contador o sector...">
+        `;
+        cardHeader.parentElement.querySelector('.card-body').insertBefore(searchDiv, cardHeader.parentElement.querySelector('.table-responsive'));
+        
+        // Funcionalidad de búsqueda
+        document.getElementById('buscarFactura').addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#tablaFacturas tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

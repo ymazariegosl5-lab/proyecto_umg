@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% block title %}Registro de Lecturas{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6">
+                <i class="bi bi-file-earmark-text"></i> Registro de Lecturas
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Inicio</a></li>
+                    <li class="breadcrumb-item active">Lecturas</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-journal-plus"></i> Registrar Nueva Lectura</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('registro_lectura') }}" id="formLectura">
+                        <!-- Campo de búsqueda de cliente -->
+                        <div class="mb-3 position-relative">
+                            <label for="buscarCliente" class="form-label">
+                                <strong>Buscar Cliente <span class="text-danger">*</span></strong>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input 
+                                    type="text" 
+                                    class="form-control form-control-lg" 
+                                    id="buscarCliente" 
+                                    placeholder="Escriba nombre, apellido o número de contador..."
+                                    autocomplete="off"
+                                    required>
+                            </div>
+                            <small class="text-muted">Escriba al menos 2 caracteres para buscar</small>
+                            
+                            <!-- Lista de resultados -->
+                            <div id="resultadosBusqueda" class="list-group position-absolute w-100 shadow-lg" style="z-index: 1000; display: none; max-height: 300px; overflow-y: auto;"></div>
+                            
+                            <!-- Campo oculto con el ID del cliente seleccionado -->
+                            <input type="hidden" id="id_cliente" name="id_cliente" required>
+                        </div>
+
+                        <!-- Información del cliente seleccionado -->
+                        <div id="infoCliente" class="alert alert-info d-none">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Cliente:</strong> <span id="nombreCliente"></span></p>
+                                    <p class="mb-1"><strong>Contador:</strong> <code id="contadorCliente"></code></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Sector:</strong> <span id="sectorCliente"></span></p>
+                                    <p class="mb-1"><strong>Última Lectura:</strong> <span id="ultimaLectura"></span> m³</p>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="limpiarSeleccion()">
+                                <i class="bi bi-x-circle"></i> Cambiar Cliente
+                            </button>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="fecha_lectura" class="form-label">
+                                    <strong>Fecha de Lectura <span class="text-danger">*</span></strong>
+                                </label>
+                                <input 
+                                    type="date" 
+                                    class="form-control" 
+                                    id="fecha_lectura" 
+                                    name="fecha_lectura" 
+                                    required>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="lectura_actual" class="form-label">
+                                    <strong>Lectura Actual (m³) <span class="text-danger">*</span></strong>
+                                </label>
+                                <input 
+                                    type="number" 
+                                    class="form-control" 
+                                    id="lectura_actual" 
+                                    name="lectura_actual" 
+                                    step="0.01" 
+                                    min="0"
+                                    placeholder="Ej: 125.50"
+                                    required>
+                                <small class="text-muted">Use punto decimal (.) para decimales</small>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-info btn-lg text-white">
+                                <i class="bi bi-save"></i> Registrar Lectura
+                            </button>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Últimas lecturas registradas -->
+    {% if ultimas_lecturas %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Últimas Lecturas Registradas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>No. Contador</th>
+                                    <th>Fecha Lectura</th>
+                                    <th>Lectura Actual</th>
+                                    <th>Monto</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lectura in ultimas_lecturas %}
+                                <tr>
+                                    <td>{{ lectura.nombre }} {{ lectura.apellido }}</td>
+                                    <td><code>{{ lectura.no_contador }}</code></td>
+                                    <td>{{ lectura.fecha_lectura.strftime('%d/%m/%Y') }}</td>
+                                    <td><strong>{{ "%.2f"|format(lectura.lectura_actual) }} m³</strong></td>
+                                    <td>
+                                        {% if lectura.monto_total < 0 %}
+                                        <span class="text-success">CRÉDITO: Q{{ "%.2f"|format(lectura.monto_total|abs) }}</span>
+                                        {% else %}
+                                        Q{{ "%.2f"|format(lectura.monto_total) }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if lectura.estado_pago == 'PAGADO' %}
+                                        <span class="badge bg-success">Pagado</span>
+                                        {% else %}
+                                        <span class="badge bg-warning text-dark">Pendiente</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+#resultadosBusqueda {
+    margin-top: 5px;
+    border-radius: 0.25rem;
+}
+
+#resultadosBusqueda .list-group-item {
+    cursor: pointer;
+    border-left: 3px solid transparent;
+}
+
+#resultadosBusqueda .list-group-item:hover {
+    background-color: #e9ecef;
+    border-left-color: #0dcaf0;
+}
+
+.cliente-resultado {
+    transition: all 0.2s;
+}
+
+.spinner-busqueda {
+    display: none;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const buscarInput = document.getElementById('buscarCliente');
+    const resultadosDiv = document.getElementById('resultadosBusqueda');
+    const idClienteInput = document.getElementById('id_cliente');
+    const infoClienteDiv = document.getElementById('infoCliente');
+    const formLectura = document.getElementById('formLectura');
+    
+    let clienteSeleccionado = null;
+    let timeoutBusqueda = null;
+
+    // Establecer fecha actual por defecto
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha_lectura').value = hoy;
+
+    // Búsqueda en tiempo real
+    buscarInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        // Limpiar timeout anterior
+        clearTimeout(timeoutBusqueda);
+        
+        // Si hay menos de 2 caracteres, ocultar resultados
+        if (query.length < 2) {
+            resultadosDiv.style.display = 'none';
+            resultadosDiv.innerHTML = '';
+            return;
+        }
+        
+        // Esperar 300ms después de que el usuario deje de escribir
+        timeoutBusqueda = setTimeout(() => {
+            buscarClientes(query);
+        }, 300);
+    });
+
+    // Función para buscar clientes
+    async function buscarClientes(query) {
+        try {
+            const response = await fetch(`/api/buscar-clientes?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            
+            mostrarResultados(data.clientes);
+        } catch (error) {
+            console.error('Error al buscar clientes:', error);
+            resultadosDiv.innerHTML = '<div class="alert alert-danger m-2">Error al buscar clientes</div>';
+        }
+    }
+
+    // Función para mostrar resultados
+    function mostrarResultados(clientes) {
+        resultadosDiv.innerHTML = '';
+        
+        if (clientes.length === 0) {
+            resultadosDiv.innerHTML = `
+                <div class="list-group-item">
+                    <i class="bi bi-info-circle text-muted"></i> No se encontraron clientes
+                </div>
+            `;
+            resultadosDiv.style.display = 'block';
+            return;
+        }
+        
+        clientes.forEach(cliente => {
+            const item = document.createElement('a');
+            item.className = 'list-group-item list-group-item-action cliente-resultado';
+            item.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">${cliente.nombre_completo}</h6>
+                        <small class="text-muted">
+                            <i class="bi bi-hash"></i> ${cliente.no_contador} | 
+                            <i class="bi bi-geo-alt"></i> ${cliente.sector}
+                        </small>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted">Última lectura:</small><br>
+                        <strong>${cliente.ultima_lectura.toFixed(2)} m³</strong>
+                    </div>
+                </div>
+            `;
+            
+            item.addEventListener('click', () => {
+                seleccionarCliente(cliente);
+            });
+            
+            resultadosDiv.appendChild(item);
+        });
+        
+        resultadosDiv.style.display = 'block';
+    }
+
+    // Función para seleccionar un cliente
+    function seleccionarCliente(cliente) {
+        clienteSeleccionado = cliente;
+        
+        // Llenar campos ocultos
+        idClienteInput.value = cliente.id;
+        
+        // Actualizar información visible
+        document.getElementById('nombreCliente').textContent = cliente.nombre_completo;
+        document.getElementById('contadorCliente').textContent = cliente.no_contador;
+        document.getElementById('sectorCliente').textContent = cliente.sector;
+        document.getElementById('ultimaLectura').textContent = cliente.ultima_lectura.toFixed(2);
+        
+        // Mostrar info y ocultar búsqueda
+        infoClienteDiv.classList.remove('d-none');
+        buscarInput.value = cliente.nombre_completo;
+        buscarInput.disabled = true;
+        resultadosDiv.style.display = 'none';
+        
+        // Hacer focus en el campo de lectura actual
+        document.getElementById('lectura_actual').focus();
+        
+        // Opcional: Prellenar con la última lectura + 1
+        const sugerenciaLectura = cliente.ultima_lectura + 1;
+        document.getElementById('lectura_actual').placeholder = `Sugerencia: ${sugerenciaLectura.toFixed(2)}`;
+    }
+
+    // Función para limpiar selección
+    window.limpiarSeleccion = function() {
+        clienteSeleccionado = null;
+        idClienteInput.value = '';
+        buscarInput.value = '';
+        buscarInput.disabled = false;
+        infoClienteDiv.classList.add('d-none');
+        document.getElementById('lectura_actual').value = '';
+        buscarInput.focus();
+    };
+
+    // Cerrar resultados al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!buscarInput.contains(e.target) && !resultadosDiv.contains(e.target)) {
+            resultadosDiv.style.display = 'none';
+        }
+    });
+
+    // Validación del formulario
+    formLectura.addEventListener('submit', function(e) {
+        if (!idClienteInput.value) {
+            e.preventDefault();
+            alert('Por favor, seleccione un cliente de la lista de búsqueda');
+            buscarInput.focus();
+            return false;
+        }
+        
+        const lecturaActual = parseFloat(document.getElementById('lectura_actual').value);
+        const ultimaLectura = clienteSeleccionado ? clienteSeleccionado.ultima_lectura : 0;
+        
+        // Advertencia si la lectura es menor (pero permitir continuar)
+        if (lecturaActual < ultimaLectura) {
+            const confirmar = confirm(
+                `⚠️ ADVERTENCIA: La lectura actual (${lecturaActual.toFixed(2)} m³) es MENOR que la última lectura (${ultimaLectura.toFixed(2)} m³).\n\n` +
+                `Esto generará un CONSUMO NEGATIVO de ${(lecturaActual - ultimaLectura).toFixed(2)} m³.\n\n` +
+                `El sistema calculará un crédito a favor del cliente.\n\n` +
+                `¿Está seguro de continuar?`
+            );
+            if (!confirmar) {
+                return false;
+            }
+        }
+    });
+
+    // Navegación con teclado (Enter para seleccionar primer resultado)
+    buscarInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && resultadosDiv.style.display === 'block') {
+            e.preventDefault();
+            const primerResultado = resultadosDiv.querySelector('.cliente-resultado');
+            if (primerResultado) {
+                primerResultado.click();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
