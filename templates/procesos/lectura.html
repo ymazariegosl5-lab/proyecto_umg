@@ -441,8 +441,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Función para editar lectura
-async function editarLectura(idLectura) {
+// Función para editar lectura (scope global)
+window.editarLectura = async function(idLectura) {
     try {
         const response = await fetch(`/api/lecturas/${idLectura}`);
         const data = await response.json();
@@ -569,8 +569,8 @@ async function editarLectura(idLectura) {
     }
 }
 
-// Función para eliminar lectura
-function eliminarLectura(idLectura) {
+// Función para eliminar lectura (scope global)
+window.eliminarLectura = function(idLectura) {
     Swal.fire({
         title: '¿Eliminar Lectura?',
         html: `¿Está seguro de que desea eliminar esta lectura?<br><br><small class="text-muted">Esta acción no se puede deshacer.</small>`,

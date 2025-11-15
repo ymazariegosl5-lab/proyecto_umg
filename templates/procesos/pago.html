@@ -272,8 +272,8 @@ $(document).ready(function() {
     });
 });
 
-// Función para editar lectura desde la página de pagos
-async function editarLecturaDesdePago(idLectura) {
+// Función para editar lectura desde la página de pagos (scope global)
+window.editarLecturaDesdePago = async function(idLectura) {
     // Reutilizar la función editarLectura si está disponible
     if (typeof editarLectura === 'function') {
         await editarLectura(idLectura);

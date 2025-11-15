@@ -267,13 +267,28 @@ $(document).ready(function() {
     });
 });
 
-// Función para editar usuario
-async function editarUsuario(idUsuario) {
+// Función para editar usuario (definida en scope global)
+window.editarUsuario = async function(idUsuario) {
+    console.log('editarUsuario llamado con ID:', idUsuario);
     try {
         const response = await fetch(`/api/usuarios/${idUsuario}`);
         const data = await response.json();
         
+        console.log('Respuesta API:', data);
+        
         if (response.ok) {
+            // Verificar que el modal existe
+            const modalElement = document.getElementById('modalEditarUsuario');
+            if (!modalElement) {
+                console.error('Modal no encontrado: modalEditarUsuario');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'El modal de edición no se encontró en la página'
+                });
+                return;
+            }
+            
             // Llenar el modal con los datos del usuario
             document.getElementById('edit_usuario_id').value = data.id_usuario;
             document.getElementById('edit_usuario_nombre').value = data.nombre;
@@ -282,8 +297,9 @@ async function editarUsuario(idUsuario) {
             document.getElementById('edit_usuario_rol').value = data.rol;
             
             // Mostrar el modal
-            const modal = new bootstrap.Modal(document.getElementById('modalEditarUsuario'));
+            const modal = new bootstrap.Modal(modalElement);
             modal.show();
+            console.log('Modal mostrado exitosamente');
         } else {
             Swal.fire({
                 icon: 'error',
@@ -292,61 +308,67 @@ async function editarUsuario(idUsuario) {
             });
         }
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error al editar usuario:', error);
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Error al cargar el usuario'
+            text: 'Error al cargar el usuario: ' + error.message
         });
     }
-}
+};
 
 // Manejar el envío del formulario de edición de usuario
-document.getElementById('formEditarUsuario').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const idUsuario = document.getElementById('edit_usuario_id').value;
-    const datos = {
-        nombre: document.getElementById('edit_usuario_nombre').value,
-        apellido: document.getElementById('edit_usuario_apellido').value,
-        correo_electronico: document.getElementById('edit_usuario_email').value,
-        rol: document.getElementById('edit_usuario_rol').value
-    };
-    
-    try {
-        const response = await fetch(`/api/usuarios/${idUsuario}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(datos)
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok) {
-            Swal.fire({
-                icon: 'success',
-                title: '¡Éxito!',
-                text: result.message || 'Usuario actualizado exitosamente',
-                timer: 2000,
-                showConfirmButton: false
-            }).then(() => {
-                location.reload();
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: result.error || 'No se pudo actualizar el usuario'
-            });
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Error al actualizar el usuario'
+$(document).ready(function() {
+    // Registrar el event listener cuando el DOM esté listo
+    const formEditarUsuario = document.getElementById('formEditarUsuario');
+    if (formEditarUsuario) {
+        formEditarUsuario.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const idUsuario = document.getElementById('edit_usuario_id').value;
+            const datos = {
+                nombre: document.getElementById('edit_usuario_nombre').value,
+                apellido: document.getElementById('edit_usuario_apellido').value,
+                correo_electronico: document.getElementById('edit_usuario_email').value,
+                rol: document.getElementById('edit_usuario_rol').value
+            };
+            
+            try {
+                const response = await fetch(`/api/usuarios/${idUsuario}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(datos)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Éxito!',
+                        text: result.message || 'Usuario actualizado exitosamente',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: result.error || 'No se pudo actualizar el usuario'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error al actualizar el usuario'
+                });
+            }
         });
     }
 });

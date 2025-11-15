@@ -282,13 +282,27 @@ $(document).ready(function() {
     }
 });
 
-// Función para editar cliente
-async function editarCliente(idCliente) {
+// Función para editar cliente (scope global)
+window.editarCliente = async function(idCliente) {
+    console.log('editarCliente llamado con ID:', idCliente);
     try {
         const response = await fetch(`/api/clientes/${idCliente}`);
         const data = await response.json();
         
+        console.log('Respuesta API:', data);
+        
         if (response.ok) {
+            // Verificar que el modal existe
+            const modalElement = document.getElementById('modalEditarCliente');
+            if (!modalElement) {
+                console.error('Modal no encontrado: modalEditarCliente');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'El modal de edición no se encontró en la página'
+                });
+                return;
+            }
             // Llenar el modal con los datos del cliente
             document.getElementById('edit_cliente_id').value = data.id_cliente;
             document.getElementById('edit_nombre').value = data.nombre;
@@ -332,10 +346,10 @@ async function editarCliente(idCliente) {
             text: 'Error al cargar el cliente'
         });
     }
-}
+};
 
-// Función para eliminar cliente
-function eliminarCliente(idCliente, nombreCliente) {
+// Función para eliminar cliente (scope global)
+window.eliminarCliente = function(idCliente, nombreCliente) {
     Swal.fire({
         title: '¿Eliminar Cliente?',
         html: `¿Está seguro de que desea eliminar a <strong>${nombreCliente}</strong>?<br><br><small class="text-muted">Esta acción no se puede deshacer.</small>`,
@@ -354,55 +368,60 @@ function eliminarCliente(idCliente, nombreCliente) {
             });
         }
     });
-}
+};
 
 // Manejar el envío del formulario de edición
-document.getElementById('formEditarCliente').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const idCliente = document.getElementById('edit_cliente_id').value;
-    const datos = {
-        nombre: document.getElementById('edit_nombre').value,
-        apellido: document.getElementById('edit_apellido').value,
-        id_sector: document.getElementById('edit_id_sector').value,
-        telefono: document.getElementById('edit_telefono').value,
-        no_contador: document.getElementById('edit_no_contador').value
-    };
-    
-    try {
-        const response = await fetch(`/api/clientes/${idCliente}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(datos)
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok) {
-            Swal.fire({
-                icon: 'success',
-                title: '¡Éxito!',
-                text: result.message || 'Cliente actualizado exitosamente',
-                timer: 2000,
-                showConfirmButton: false
-            }).then(() => {
-                location.reload();
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: result.error || 'No se pudo actualizar el cliente'
-            });
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Error al actualizar el cliente'
+$(document).ready(function() {
+    const formEditarCliente = document.getElementById('formEditarCliente');
+    if (formEditarCliente) {
+        formEditarCliente.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const idCliente = document.getElementById('edit_cliente_id').value;
+            const datos = {
+                nombre: document.getElementById('edit_nombre').value,
+                apellido: document.getElementById('edit_apellido').value,
+                id_sector: document.getElementById('edit_id_sector').value,
+                telefono: document.getElementById('edit_telefono').value,
+                no_contador: document.getElementById('edit_no_contador').value
+            };
+            
+            try {
+                const response = await fetch(`/api/clientes/${idCliente}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(datos)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Éxito!',
+                        text: result.message || 'Cliente actualizado exitosamente',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: result.error || 'No se pudo actualizar el cliente'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error al actualizar el cliente'
+                });
+            }
         });
     }
 });
