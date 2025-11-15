@@ -381,9 +381,9 @@ def registro_lectura():
 
         try:
             cursor.execute("""
-                INSERT INTO lectura (id_cliente, id_usuario_lector, fecha_lectura, lectura_anterior, lectura_actual, consumo_m3, monto_total)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (id_cliente, session['user_id'], fecha_lectura, lectura_anterior, lectura_actual, consumo, monto_total))
+                INSERT INTO lectura (id_cliente, id_usuario_lector, fecha_lectura, lectura_anterior, lectura_actual, monto_total)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (id_cliente, session['user_id'], fecha_lectura, lectura_anterior, lectura_actual, monto_total))
             conn.commit()
             flash(f"Lectura registrada. Factura generada por Q{monto_total:.2f}.", "success")
         except mysql.connector.Error as err:
