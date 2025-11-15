@@ -108,6 +108,9 @@
                                     <th>Sector</th>
                                     <th>No. Contador</th>
                                     <th>Teléfono</th>
+                                    {% if session.rol == 'ADMIN' or tiene_permiso_template('clientes.editar') or tiene_permiso_template('clientes.eliminar') %}
+                                    <th>Acciones</th>
+                                    {% endif %}
                                 </tr>
                             </thead>
                             <tbody>
@@ -118,6 +121,22 @@
                                     <td><span class="badge bg-info">{{ cliente.nombre_sector }}</span></td>
                                     <td><code>{{ cliente.no_contador }}</code></td>
                                     <td>{{ cliente.telefono or '-' }}</td>
+                                    {% if session.rol == 'ADMIN' or tiene_permiso_template('clientes.editar') or tiene_permiso_template('clientes.eliminar') %}
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            {% if session.rol == 'ADMIN' or tiene_permiso_template('clientes.editar') %}
+                                            <button type="button" class="btn btn-primary" title="Editar Cliente" onclick="editarCliente({{ cliente.id_cliente }})">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            {% endif %}
+                                            {% if session.rol == 'ADMIN' or tiene_permiso_template('clientes.eliminar') %}
+                                            <button type="button" class="btn btn-danger" title="Eliminar Cliente" onclick="eliminarCliente({{ cliente.id_cliente }}, '{{ cliente.nombre }} {{ cliente.apellido }}')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    {% endif %}
                                 </tr>
                                 {% endfor %}
                             </tbody>

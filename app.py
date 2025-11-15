@@ -26,6 +26,25 @@ def inject_now():
     from datetime import datetime
     return {'now': datetime.now}
 
+# Procesador de contexto para verificar permisos en templates
+@app.context_processor
+def inject_permisos():
+    """Inyectar función para verificar permisos en templates"""
+    def tiene_permiso_template(codigo_permiso):
+        """Verifica si el usuario actual tiene un permiso específico"""
+        if 'user_id' not in session:
+            return False
+        # Si es ADMIN, tiene todos los permisos
+        if session.get('rol') == 'ADMIN':
+            return True
+        # Verificar en la sesión o en la BD
+        permisos_sesion = session.get('permisos', [])
+        if codigo_permiso in permisos_sesion:
+            return True
+        # Si no está en sesión, verificar en BD
+        return tiene_permiso(session['user_id'], codigo_permiso)
+    return {'tiene_permiso_template': tiene_permiso_template}
+
 # --- Funciones de Conexión a la Base de Datos ---
 def get_db_connection():
     try:

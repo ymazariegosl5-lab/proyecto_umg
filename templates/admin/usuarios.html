@@ -81,21 +81,35 @@
                                     <td>
                                         <div class="btn-group" role="group">
                                             <!-- Gestionar Permisos -->
+                                            {% if session.rol == 'ADMIN' or tiene_permiso_template('usuarios.permisos') %}
                                             <a href="{{ url_for('gestionar_permisos_usuario', id_usuario=usuario.id_usuario) }}" 
                                                class="btn btn-sm btn-info"
                                                title="Gestionar Permisos">
                                                 <i class="bi bi-shield-check"></i>
                                             </a>
+                                            {% endif %}
                                             
                                             <!-- Cambiar contraseña -->
+                                            {% if session.rol == 'ADMIN' or tiene_permiso_template('usuarios.cambiar_password') %}
                                             <a href="{{ url_for('cambiar_password_usuario', id_usuario=usuario.id_usuario) }}" 
                                                class="btn btn-sm btn-warning"
                                                title="Cambiar Contraseña">
                                                 <i class="bi bi-key"></i>
                                             </a>
+                                            {% endif %}
+                                            
+                                            <!-- Editar Usuario -->
+                                            {% if session.rol == 'ADMIN' or tiene_permiso_template('usuarios.editar') %}
+                                            <a href="#" 
+                                               class="btn btn-sm btn-primary"
+                                               title="Editar Usuario"
+                                               onclick="editarUsuario({{ usuario.id_usuario }})">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            {% endif %}
                                             
                                             <!-- Activar/Desactivar -->
-                                            {% if usuario.id_usuario != session.user_id %}
+                                            {% if (usuario.id_usuario != session.user_id) and (session.rol == 'ADMIN' or tiene_permiso_template('usuarios.editar')) %}
                                             <form method="POST" 
                                                   action="{{ url_for('toggle_usuario', id_usuario=usuario.id_usuario) }}"
                                                   style="display: inline;"
