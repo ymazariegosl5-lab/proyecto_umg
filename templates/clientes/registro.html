@@ -165,6 +165,53 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para Editar Cliente -->
+<div class="modal fade" id="modalEditarCliente" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-pencil"></i> Editar Cliente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditarCliente">
+                <div class="modal-body">
+                    <input type="hidden" id="edit_cliente_id" name="id_cliente">
+                    <div class="mb-3">
+                        <label for="edit_nombre" class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit_nombre" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_apellido" class="form-label">Apellido <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit_apellido" name="apellido" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_id_sector" class="form-label">Sector <span class="text-danger">*</span></label>
+                        <select class="form-select" id="edit_id_sector" name="id_sector" required>
+                            {% for sector in sectores %}
+                            <option value="{{ sector.id_sector }}">{{ sector.nombre_sector }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_telefono" class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" id="edit_telefono" name="telefono" placeholder="Ej: 5555-1234">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_no_contador" class="form-label">No. de Contador <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit_no_contador" name="no_contador" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -196,6 +243,115 @@ $(document).ready(function() {
                     className: 'btn btn-info btn-sm'
                 }
             ]
+        });
+    }
+});
+
+// Función para editar cliente
+async function editarCliente(idCliente) {
+    try {
+        const response = await fetch(`/api/clientes/${idCliente}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Llenar el modal con los datos del cliente
+            document.getElementById('edit_cliente_id').value = data.id_cliente;
+            document.getElementById('edit_nombre').value = data.nombre;
+            document.getElementById('edit_apellido').value = data.apellido;
+            document.getElementById('edit_id_sector').value = data.id_sector;
+            document.getElementById('edit_telefono').value = data.telefono || '';
+            document.getElementById('edit_no_contador').value = data.no_contador;
+            
+            // Mostrar el modal
+            const modal = new bootstrap.Modal(document.getElementById('modalEditarCliente'));
+            modal.show();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.error || 'No se pudo cargar el cliente'
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error al cargar el cliente'
+        });
+    }
+}
+
+// Función para eliminar cliente
+function eliminarCliente(idCliente, nombreCliente) {
+    Swal.fire({
+        title: '¿Eliminar Cliente?',
+        html: `¿Está seguro de que desea eliminar a <strong>${nombreCliente}</strong>?<br><br><small class="text-muted">Esta acción no se puede deshacer.</small>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="bi bi-trash"></i> Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Aquí puedes agregar la llamada a la API para eliminar el cliente
+            Swal.fire({
+                icon: 'info',
+                title: 'Función no implementada',
+                text: 'La función de eliminar cliente aún no está implementada.'
+            });
+        }
+    });
+}
+
+// Manejar el envío del formulario de edición
+document.getElementById('formEditarCliente').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const idCliente = document.getElementById('edit_cliente_id').value;
+    const datos = {
+        nombre: document.getElementById('edit_nombre').value,
+        apellido: document.getElementById('edit_apellido').value,
+        id_sector: document.getElementById('edit_id_sector').value,
+        telefono: document.getElementById('edit_telefono').value,
+        no_contador: document.getElementById('edit_no_contador').value
+    };
+    
+    try {
+        const response = await fetch(`/api/clientes/${idCliente}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(datos)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: result.message || 'Cliente actualizado exitosamente',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: result.error || 'No se pudo actualizar el cliente'
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error al actualizar el cliente'
         });
     }
 });

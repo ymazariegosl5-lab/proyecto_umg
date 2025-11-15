@@ -159,6 +159,53 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para Editar Usuario -->
+<div class="modal fade" id="modalEditarUsuario" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-pencil"></i> Editar Usuario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditarUsuario">
+                <div class="modal-body">
+                    <input type="hidden" id="edit_usuario_id" name="id_usuario">
+                    <div class="mb-3">
+                        <label for="edit_usuario_nombre" class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit_usuario_nombre" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_usuario_apellido" class="form-label">Apellido <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit_usuario_apellido" name="apellido" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_usuario_email" class="form-label">Correo Electrónico <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="edit_usuario_email" name="correo_electronico" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_usuario_rol" class="form-label">Rol <span class="text-danger">*</span></label>
+                        <select class="form-select" id="edit_usuario_rol" name="rol" required>
+                            <option value="ADMIN">ADMIN - Administrador</option>
+                            <option value="LECTOR">LECTOR - Lector</option>
+                            <option value="TESORERO">TESORERO - Tesorero</option>
+                            <option value="PRESIDENTE">PRESIDENTE - Presidente</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-info">
+                        <small><i class="bi bi-info-circle"></i> Para cambiar la contraseña, use la opción "Cambiar Contraseña"</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -218,6 +265,90 @@ $(document).ready(function() {
             }
         });
     });
+});
+
+// Función para editar usuario
+async function editarUsuario(idUsuario) {
+    try {
+        const response = await fetch(`/api/usuarios/${idUsuario}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Llenar el modal con los datos del usuario
+            document.getElementById('edit_usuario_id').value = data.id_usuario;
+            document.getElementById('edit_usuario_nombre').value = data.nombre;
+            document.getElementById('edit_usuario_apellido').value = data.apellido;
+            document.getElementById('edit_usuario_email').value = data.correo_electronico;
+            document.getElementById('edit_usuario_rol').value = data.rol;
+            
+            // Mostrar el modal
+            const modal = new bootstrap.Modal(document.getElementById('modalEditarUsuario'));
+            modal.show();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.error || 'No se pudo cargar el usuario'
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error al cargar el usuario'
+        });
+    }
+}
+
+// Manejar el envío del formulario de edición de usuario
+document.getElementById('formEditarUsuario').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const idUsuario = document.getElementById('edit_usuario_id').value;
+    const datos = {
+        nombre: document.getElementById('edit_usuario_nombre').value,
+        apellido: document.getElementById('edit_usuario_apellido').value,
+        correo_electronico: document.getElementById('edit_usuario_email').value,
+        rol: document.getElementById('edit_usuario_rol').value
+    };
+    
+    try {
+        const response = await fetch(`/api/usuarios/${idUsuario}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(datos)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: result.message || 'Usuario actualizado exitosamente',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: result.error || 'No se pudo actualizar el usuario'
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error al actualizar el usuario'
+        });
+    }
 });
 </script>
 {% endblock %}

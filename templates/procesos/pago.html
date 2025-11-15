@@ -109,7 +109,7 @@
                                             {% if session.rol == 'ADMIN' or tiene_permiso_template('lecturas.editar') %}
                                             <button type="button" 
                                                     class="btn btn-primary" 
-                                                    onclick="editarLectura({{ factura.id_lectura }})"
+                                                    onclick="editarLecturaDesdePago({{ factura.id_lectura }})"
                                                     title="Editar Lectura">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
@@ -267,5 +267,76 @@ $(document).ready(function() {
         ]
     });
 });
+
+// Función para editar lectura desde la página de pagos
+async function editarLecturaDesdePago(idLectura) {
+    // Reutilizar la función editarLectura si está disponible
+    if (typeof editarLectura === 'function') {
+        await editarLectura(idLectura);
+    } else {
+        // Implementar la función aquí también
+        try {
+            const response = await fetch(`/api/lecturas/${idLectura}`);
+            const data = await response.json();
+            
+            if (response.ok) {
+                Swal.fire({
+                    title: 'Editar Lectura',
+                    html: `
+                        <div class="text-start">
+                            <p><strong>Cliente:</strong> ${data.nombre} ${data.apellido}</p>
+                            <p><strong>Contador:</strong> ${data.no_contador}</p>
+                            <div class="mt-3">
+                                <label class="form-label">Fecha Lectura</label>
+                                <input type="date" id="edit_fecha" class="form-control" value="${data.fecha_lectura}">
+                            </div>
+                            <div class="mt-3">
+                                <label class="form-label">Lectura Anterior (m³)</label>
+                                <input type="number" id="edit_lectura_ant" class="form-control" value="${data.lectura_anterior}" step="0.01">
+                            </div>
+                            <div class="mt-3">
+                                <label class="form-label">Lectura Actual (m³)</label>
+                                <input type="number" id="edit_lectura_act" class="form-control" value="${data.lectura_actual}" step="0.01">
+                            </div>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Guardar',
+                    cancelButtonText: 'Cancelar',
+                    preConfirm: async () => {
+                        const datos = {
+                            fecha_lectura: document.getElementById('edit_fecha').value,
+                            lectura_anterior: document.getElementById('edit_lectura_ant').value,
+                            lectura_actual: document.getElementById('edit_lectura_act').value
+                        };
+                        
+                        const updateResponse = await fetch(`/api/lecturas/${idLectura}`, {
+                            method: 'PUT',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(datos)
+                        });
+                        
+                        if (!updateResponse.ok) {
+                            const result = await updateResponse.json();
+                            throw new Error(result.error || 'Error al actualizar');
+                        }
+                        
+                        return await updateResponse.json();
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire('¡Éxito!', 'Lectura actualizada correctamente', 'success').then(() => {
+                            location.reload();
+                        });
+                    }
+                });
+            } else {
+                Swal.fire('Error', data.error || 'No se pudo cargar la lectura', 'error');
+            }
+        } catch (error) {
+            Swal.fire('Error', 'Error al cargar la lectura', 'error');
+        }
+    }
+}
 </script>
 {% endblock %}

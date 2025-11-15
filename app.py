@@ -374,6 +374,143 @@ def registrar_cliente():
     return render_template('clientes/registro.html', sectores=sectores, clientes_recientes=clientes_recientes)
 
 
+@app.route('/api/clientes/<int:id_cliente>', methods=['GET'])
+@login_required
+def obtener_cliente(id_cliente):
+    """Obtener datos de un cliente para editar"""
+    if not (session.get('rol') == 'ADMIN' or tiene_permiso(session.get('user_id'), 'clientes.editar')):
+        return jsonify({'error': 'No tienes permiso para esta acción'}), 403
+    
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({'error': 'Error de conexión'}), 500
+    
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT c.id_cliente, c.nombre, c.apellido, c.id_sector, c.telefono, c.no_contador, s.nombre_sector
+        FROM cliente c
+        JOIN sector s ON c.id_sector = s.id_sector
+        WHERE c.id_cliente = %s AND c.activo = TRUE
+    """, (id_cliente,))
+    cliente = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+    
+    if not cliente:
+        return jsonify({'error': 'Cliente no encontrado'}), 404
+    
+    return jsonify(cliente)
+
+
+@app.route('/api/clientes/<int:id_cliente>', methods=['PUT'])
+@login_required
+def actualizar_cliente(id_cliente):
+    """Actualizar datos de un cliente"""
+    if not (session.get('rol') == 'ADMIN' or tiene_permiso(session.get('user_id'), 'clientes.editar')):
+        return jsonify({'error': 'No tienes permiso para esta acción'}), 403
+    
+    data = request.json
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({'error': 'Error de conexión'}), 500
+    
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            UPDATE cliente 
+            SET nombre = %s, apellido = %s, id_sector = %s, telefono = %s, no_contador = %s,
+                ultima_actualizacion = CURRENT_TIMESTAMP
+            WHERE id_cliente = %s AND activo = TRUE
+        """, (data['nombre'], data['apellido'], data['id_sector'], data.get('telefono', ''), 
+              data['no_contador'], id_cliente))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Cliente actualizado exitosamente'})
+    except mysql.connector.Error as err:
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        return jsonify({'error': str(err)}), 400
+
+
+@app.route('/api/lecturas/<int:id_lectura>', methods=['GET'])
+@login_required
+def obtener_lectura(id_lectura):
+    """Obtener datos de una lectura para editar"""
+    if not (session.get('rol') == 'ADMIN' or tiene_permiso(session.get('user_id'), 'lecturas.editar')):
+        return jsonify({'error': 'No tienes permiso para esta acción'}), 403
+    
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({'error': 'Error de conexión'}), 500
+    
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT l.id_lectura, l.id_cliente, l.fecha_lectura, l.lectura_anterior, 
+               l.lectura_actual, l.consumo_m3, l.monto_total, l.estado_pago,
+               c.nombre, c.apellido, c.no_contador
+        FROM lectura l
+        JOIN cliente c ON l.id_cliente = c.id_cliente
+        WHERE l.id_lectura = %s
+    """, (id_lectura,))
+    lectura = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+    
+    if not lectura:
+        return jsonify({'error': 'Lectura no encontrada'}), 404
+    
+    return jsonify(lectura)
+
+
+@app.route('/api/lecturas/<int:id_lectura>', methods=['PUT'])
+@login_required
+def actualizar_lectura(id_lectura):
+    """Actualizar datos de una lectura"""
+    if not (session.get('rol') == 'ADMIN' or tiene_permiso(session.get('user_id'), 'lecturas.editar')):
+        return jsonify({'error': 'No tienes permiso para esta acción'}), 403
+    
+    data = request.json
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({'error': 'Error de conexión'}), 500
+    
+    cursor = conn.cursor()
+    
+    try:
+        lectura_anterior = float(data['lectura_anterior'])
+        lectura_actual = float(data['lectura_actual'])
+        fecha_lectura = data['fecha_lectura']
+        
+        # El consumo_m3 se calcula automáticamente por la columna GENERATED
+        # Pero necesitamos recalcular el monto_total
+        consumo = lectura_actual - lectura_anterior
+        monto_total = calcular_factura(consumo)
+        
+        cursor.execute("""
+            UPDATE lectura 
+            SET fecha_lectura = %s, lectura_anterior = %s, lectura_actual = %s, monto_total = %s
+            WHERE id_lectura = %s
+        """, (fecha_lectura, lectura_anterior, lectura_actual, monto_total, id_lectura))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Lectura actualizada exitosamente'})
+    except mysql.connector.Error as err:
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        return jsonify({'error': str(err)}), 400
+
+
 # --- RUTAS DE PROCESOS (Lectura y Pago) ---
 
 @app.route('/procesos/lectura', methods=['GET', 'POST'])
@@ -1061,6 +1198,24 @@ def ver_sectores():
     return render_template('sectores/lista.html', sectores=sectores)
 
 
+@app.route('/api/sectores', methods=['GET'])
+@login_required
+def obtener_sectores_api():
+    """Obtener todos los sectores para uso en API"""
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({'error': 'Error de conexión'}), 500
+    
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT id_sector, nombre_sector FROM sector ORDER BY nombre_sector")
+    sectores = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return jsonify(sectores)
+
+
 @app.route('/sectores/<int:id_sector>')
 @login_required
 def ver_clientes_sector(id_sector):
@@ -1255,6 +1410,74 @@ def toggle_usuario(id_usuario):
         conn.close()
     
     return redirect(url_for('listar_usuarios'))
+
+
+@app.route('/api/usuarios/<int:id_usuario>', methods=['GET'])
+@login_required
+def obtener_usuario(id_usuario):
+    """Obtener datos de un usuario para editar"""
+    if not (session.get('rol') == 'ADMIN' or tiene_permiso(session.get('user_id'), 'usuarios.editar')):
+        return jsonify({'error': 'No tienes permiso para esta acción'}), 403
+    
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({'error': 'Error de conexión'}), 500
+    
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT id_usuario, nombre, apellido, correo_electronico, rol
+        FROM usuario
+        WHERE id_usuario = %s
+    """, (id_usuario,))
+    usuario = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+    
+    if not usuario:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+    
+    return jsonify(usuario)
+
+
+@app.route('/api/usuarios/<int:id_usuario>', methods=['PUT'])
+@login_required
+def actualizar_usuario(id_usuario):
+    """Actualizar datos de un usuario"""
+    if not (session.get('rol') == 'ADMIN' or tiene_permiso(session.get('user_id'), 'usuarios.editar')):
+        return jsonify({'error': 'No tienes permiso para esta acción'}), 403
+    
+    data = request.json
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({'error': 'Error de conexión'}), 500
+    
+    cursor = conn.cursor()
+    
+    try:
+        # Verificar que el rol sea válido
+        if 'rol' in data and data['rol'] not in ['ADMIN', 'LECTOR', 'TESORERO', 'PRESIDENTE']:
+            return jsonify({'error': 'Rol no válido'}), 400
+        
+        # Actualizar usuario (sin cambiar contraseña)
+        cursor.execute("""
+            UPDATE usuario 
+            SET nombre = %s, apellido = %s, correo_electronico = %s, rol = %s,
+                ultima_actualizacion = CURRENT_TIMESTAMP
+            WHERE id_usuario = %s
+        """, (data['nombre'], data['apellido'], data['correo_electronico'], 
+              data.get('rol', 'LECTOR'), id_usuario))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Usuario actualizado exitosamente'})
+    except mysql.connector.Error as err:
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        return jsonify({'error': str(err)}), 400
 
 
 @app.route('/admin/usuarios/cambiar-password/<int:id_usuario>', methods=['GET', 'POST'])

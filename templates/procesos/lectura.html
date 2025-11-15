@@ -131,9 +131,7 @@
                                     <th>Lectura Actual</th>
                                     <th>Monto</th>
                                     <th>Estado</th>
-                                    {% if session.rol == 'ADMIN' or tiene_permiso_template('lecturas.editar') or tiene_permiso_template('lecturas.eliminar') %}
                                     <th>Acciones</th>
-                                    {% endif %}
                                 </tr>
                             </thead>
                             <tbody>
@@ -171,6 +169,10 @@
                                             </button>
                                             {% endif %}
                                         </div>
+                                    </td>
+                                    {% else %}
+                                    <td>
+                                        <span class="text-muted small"><i class="bi bi-lock"></i> Sin permisos</span>
                                     </td>
                                     {% endif %}
                                 </tr>
@@ -440,5 +442,156 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Función para editar lectura
+async function editarLectura(idLectura) {
+    try {
+        const response = await fetch(`/api/lecturas/${idLectura}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Crear y mostrar modal de edición
+            const modalHtml = `
+                <div class="modal fade" id="modalEditarLectura" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-info text-white">
+                                <h5 class="modal-title"><i class="bi bi-pencil"></i> Editar Lectura</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form id="formEditarLectura">
+                                <div class="modal-body">
+                                    <input type="hidden" id="edit_lectura_id" value="${data.id_lectura}">
+                                    <div class="alert alert-info">
+                                        <strong>Cliente:</strong> ${data.nombre} ${data.apellido}<br>
+                                        <strong>Contador:</strong> ${data.no_contador}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit_fecha_lectura" class="form-label">Fecha de Lectura <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" id="edit_fecha_lectura" value="${data.fecha_lectura}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit_lectura_anterior" class="form-label">Lectura Anterior (m³) <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="edit_lectura_anterior" value="${data.lectura_anterior}" step="0.01" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit_lectura_actual" class="form-label">Lectura Actual (m³) <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="edit_lectura_actual" value="${data.lectura_actual}" step="0.01" required>
+                                    </div>
+                                    <div class="alert alert-warning">
+                                        <small><i class="bi bi-info-circle"></i> El consumo y monto se recalcularán automáticamente.</small>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save"></i> Guardar Cambios
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Eliminar modal anterior si existe
+            const modalAnterior = document.getElementById('modalEditarLectura');
+            if (modalAnterior) {
+                modalAnterior.remove();
+            }
+            
+            // Agregar el modal al DOM
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Mostrar el modal
+            const modal = new bootstrap.Modal(document.getElementById('modalEditarLectura'));
+            modal.show();
+            
+            // Manejar el envío del formulario
+            document.getElementById('formEditarLectura').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const datos = {
+                    fecha_lectura: document.getElementById('edit_fecha_lectura').value,
+                    lectura_anterior: document.getElementById('edit_lectura_anterior').value,
+                    lectura_actual: document.getElementById('edit_lectura_actual').value
+                };
+                
+                try {
+                    const updateResponse = await fetch(`/api/lecturas/${idLectura}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(datos)
+                    });
+                    
+                    const result = await updateResponse.json();
+                    
+                    if (updateResponse.ok) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Éxito!',
+                            text: result.message || 'Lectura actualizada exitosamente',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: result.error || 'No se pudo actualizar la lectura'
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Error al actualizar la lectura'
+                    });
+                }
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.error || 'No se pudo cargar la lectura'
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error al cargar la lectura'
+        });
+    }
+}
+
+// Función para eliminar lectura
+function eliminarLectura(idLectura) {
+    Swal.fire({
+        title: '¿Eliminar Lectura?',
+        html: `¿Está seguro de que desea eliminar esta lectura?<br><br><small class="text-muted">Esta acción no se puede deshacer.</small>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="bi bi-trash"></i> Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Aquí puedes agregar la llamada a la API para eliminar la lectura
+            Swal.fire({
+                icon: 'info',
+                title: 'Función no implementada',
+                text: 'La función de eliminar lectura aún no está implementada.'
+            });
+        }
+    });
+}
 </script>
 {% endblock %}
