@@ -70,9 +70,7 @@
                                     <th>Teléfono</th>
                                     <th>Deuda Pendiente</th>
                                     <th>Estado</th>
-                                    {% if session.rol == 'ADMIN' or tiene_permiso_template('clientes.editar') or tiene_permiso_template('clientes.eliminar') %}
                                     <th>Acciones</th>
-                                    {% endif %}
                                 </tr>
                             </thead>
                             <tbody>
@@ -96,8 +94,8 @@
                                         <span class="badge bg-success">Al Día</span>
                                         {% endif %}
                                     </td>
-                                    {% if session.rol == 'ADMIN' or tiene_permiso_template('clientes.editar') or tiene_permiso_template('clientes.eliminar') %}
                                     <td>
+                                        {% if session.rol == 'ADMIN' or tiene_permiso_template('clientes.editar') or tiene_permiso_template('clientes.eliminar') %}
                                         <div class="btn-group btn-group-sm" role="group">
                                             {% if session.rol == 'ADMIN' or tiene_permiso_template('clientes.editar') %}
                                             <button type="button" class="btn btn-primary" title="Editar Cliente" onclick="editarCliente({{ cliente.id_cliente }})">
@@ -110,8 +108,10 @@
                                             </button>
                                             {% endif %}
                                         </div>
+                                        {% else %}
+                                        <span class="text-muted small"><i class="bi bi-lock"></i> Sin permisos</span>
+                                        {% endif %}
                                     </td>
-                                    {% endif %}
                                 </tr>
                                 {% endfor %}
                             </tbody>

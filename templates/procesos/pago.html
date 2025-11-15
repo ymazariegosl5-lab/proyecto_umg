@@ -98,6 +98,7 @@
                                         {% endif %}
                                     </td>
                                     <td>
+                                        {% if session.rol == 'ADMIN' or tiene_permiso_template('pagos.crear') or session.rol in ['ADMIN', 'TESORERO'] or tiene_permiso_template('lecturas.editar') %}
                                         <div class="btn-group btn-group-sm" role="group">
                                             {% if session.rol == 'ADMIN' or tiene_permiso_template('pagos.crear') or session.rol in ['ADMIN', 'TESORERO'] %}
                                             <button type="button" 
@@ -115,6 +116,9 @@
                                             </button>
                                             {% endif %}
                                         </div>
+                                        {% else %}
+                                        <span class="text-muted small"><i class="bi bi-lock"></i> Sin permisos</span>
+                                        {% endif %}
                                     </td>
                                 </tr>
                                 {% endfor %}

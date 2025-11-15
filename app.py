@@ -34,15 +34,23 @@ def inject_permisos():
         """Verifica si el usuario actual tiene un permiso específico"""
         if 'user_id' not in session:
             return False
+        
+        user_id = session.get('user_id')
+        user_rol = session.get('rol')
+        
         # Si es ADMIN, tiene todos los permisos
-        if session.get('rol') == 'ADMIN':
+        if user_rol == 'ADMIN':
             return True
-        # Verificar en la sesión o en la BD
-        permisos_sesion = session.get('permisos', [])
-        if codigo_permiso in permisos_sesion:
-            return True
-        # Si no está en sesión, verificar en BD
-        return tiene_permiso(session['user_id'], codigo_permiso)
+        
+        # Verificar siempre en la BD para asegurar que los permisos estén actualizados
+        # Esto es importante porque los permisos pueden cambiar mientras el usuario está logueado
+        try:
+            return tiene_permiso(user_id, codigo_permiso)
+        except Exception as e:
+            print(f"Error al verificar permiso en template: {e}")
+            # Fallback: verificar en sesión si hay error de BD
+            permisos_sesion = session.get('permisos', [])
+            return codigo_permiso in permisos_sesion
     return {'tiene_permiso_template': tiene_permiso_template}
 
 # --- Funciones de Conexión a la Base de Datos ---
@@ -1452,12 +1460,26 @@ def actualizar_usuario(id_usuario):
     if conn is None:
         return jsonify({'error': 'Error de conexión'}), 500
     
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
     
     try:
+        # Validar campos requeridos
+        if not all(key in data for key in ['nombre', 'apellido', 'correo_electronico', 'rol']):
+            return jsonify({'error': 'Faltan campos requeridos'}), 400
+        
         # Verificar que el rol sea válido
-        if 'rol' in data and data['rol'] not in ['ADMIN', 'LECTOR', 'TESORERO', 'PRESIDENTE']:
+        if data['rol'] not in ['ADMIN', 'LECTOR', 'TESORERO', 'PRESIDENTE']:
             return jsonify({'error': 'Rol no válido'}), 400
+        
+        # Verificar si el email ya existe en otro usuario
+        cursor.execute("""
+            SELECT id_usuario FROM usuario 
+            WHERE correo_electronico = %s AND id_usuario != %s
+        """, (data['correo_electronico'], id_usuario))
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'error': 'El correo electrónico ya está registrado en otro usuario'}), 400
         
         # Actualizar usuario (sin cambiar contraseña)
         cursor.execute("""
@@ -1466,7 +1488,14 @@ def actualizar_usuario(id_usuario):
                 ultima_actualizacion = CURRENT_TIMESTAMP
             WHERE id_usuario = %s
         """, (data['nombre'], data['apellido'], data['correo_electronico'], 
-              data.get('rol', 'LECTOR'), id_usuario))
+              data['rol'], id_usuario))
+        
+        # Si el usuario modificado es el mismo que está logueado y cambió su rol, actualizar sesión
+        if id_usuario == session.get('user_id'):
+            session['rol'] = data['rol']
+            # Recargar permisos si es necesario
+            session['permisos'] = obtener_permisos_usuario(id_usuario)
+            print(f"DEBUG: Sesión actualizada para usuario {id_usuario} (rol: {data['rol']})")
         
         conn.commit()
         cursor.close()
@@ -1478,6 +1507,11 @@ def actualizar_usuario(id_usuario):
         cursor.close()
         conn.close()
         return jsonify({'error': str(err)}), 400
+    except Exception as e:
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
 
 
 @app.route('/admin/usuarios/cambiar-password/<int:id_usuario>', methods=['GET', 'POST'])
@@ -1655,10 +1689,14 @@ def actualizar_permisos_usuario(id_usuario):
         
         conn.commit()
         
+        # Actualizar sesión de TODOS los usuarios que puedan estar logueados
         # Si el usuario modificado es el mismo que está logueado, actualizar su sesión
         if id_usuario == session.get('user_id'):
             session['permisos'] = obtener_permisos_usuario(id_usuario)
             print(f"DEBUG: Sesión actualizada para usuario {id_usuario}")
+        
+        # Verificar si algún otro usuario tiene permisos que necesiten actualizarse
+        # (Esto se manejará automáticamente con la verificación en BD)
         
         flash(f"Permisos actualizados exitosamente para {usuario['nombre']} {usuario['apellido']}. {len(permisos_seleccionados) if permisos_seleccionados else 0} permiso(s) asignado(s).", "success")
         
