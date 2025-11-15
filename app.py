@@ -47,6 +47,7 @@ def tiene_permiso(id_usuario, codigo_permiso):
     """Verifica si un usuario tiene un permiso específico"""
     conn = get_db_connection()
     if conn is None:
+        print(f"ERROR tiene_permiso: No se pudo conectar a la BD")
         return False
     
     try:
@@ -55,7 +56,14 @@ def tiene_permiso(id_usuario, codigo_permiso):
         cursor.execute("SELECT rol FROM usuario WHERE id_usuario = %s AND activo = TRUE", (id_usuario,))
         usuario = cursor.fetchone()
         
+        if not usuario:
+            print(f"DEBUG tiene_permiso: Usuario {id_usuario} no encontrado o inactivo")
+            cursor.close()
+            conn.close()
+            return False
+        
         if usuario and usuario['rol'] == 'ADMIN':
+            print(f"DEBUG tiene_permiso: Usuario {id_usuario} es ADMIN, tiene permiso {codigo_permiso}")
             cursor.close()
             conn.close()
             return True
@@ -71,13 +79,17 @@ def tiene_permiso(id_usuario, codigo_permiso):
         """, (id_usuario, codigo_permiso))
         
         resultado = cursor.fetchone()
-        tiene = resultado['tiene_permiso'] > 0
+        tiene = resultado['tiene_permiso'] > 0 if resultado else False
+        
+        print(f"DEBUG tiene_permiso: Usuario {id_usuario}, permiso {codigo_permiso}, resultado: {tiene}")
         
         cursor.close()
         conn.close()
         return tiene
     except Exception as e:
-        print(f"Error al verificar permiso: {e}")
+        print(f"ERROR al verificar permiso: {e}")
+        import traceback
+        traceback.print_exc()
         if conn:
             conn.close()
         return False
@@ -86,6 +98,7 @@ def obtener_permisos_usuario(id_usuario):
     """Obtiene todos los permisos de un usuario"""
     conn = get_db_connection()
     if conn is None:
+        print(f"ERROR obtener_permisos_usuario: No se pudo conectar a la BD")
         return []
     
     try:
@@ -94,9 +107,16 @@ def obtener_permisos_usuario(id_usuario):
         cursor.execute("SELECT rol FROM usuario WHERE id_usuario = %s", (id_usuario,))
         usuario = cursor.fetchone()
         
+        if not usuario:
+            print(f"DEBUG obtener_permisos_usuario: Usuario {id_usuario} no encontrado")
+            cursor.close()
+            conn.close()
+            return []
+        
         if usuario and usuario['rol'] == 'ADMIN':
             cursor.execute("SELECT codigo_permiso FROM permiso WHERE activo = TRUE")
             permisos = [row['codigo_permiso'] for row in cursor.fetchall()]
+            print(f"DEBUG obtener_permisos_usuario: Usuario {id_usuario} es ADMIN, tiene {len(permisos)} permisos")
         else:
             cursor.execute("""
                 SELECT p.codigo_permiso
@@ -105,12 +125,15 @@ def obtener_permisos_usuario(id_usuario):
                 WHERE up.id_usuario = %s AND p.activo = TRUE
             """, (id_usuario,))
             permisos = [row['codigo_permiso'] for row in cursor.fetchall()]
+            print(f"DEBUG obtener_permisos_usuario: Usuario {id_usuario} tiene {len(permisos)} permisos: {permisos}")
         
         cursor.close()
         conn.close()
         return permisos
     except Exception as e:
-        print(f"Error al obtener permisos: {e}")
+        print(f"ERROR al obtener permisos: {e}")
+        import traceback
+        traceback.print_exc()
         if conn:
             conn.close()
         return []
@@ -1352,14 +1375,29 @@ def actualizar_permisos_usuario(id_usuario):
         flash("Error de conexión a la base de datos.", "danger")
         return redirect(url_for('listar_usuarios'))
     
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
     
     try:
         # Obtener permisos seleccionados del formulario
         permisos_seleccionados = request.form.getlist('permisos')
         
+        print(f"DEBUG: Permisos recibidos: {permisos_seleccionados}")
+        print(f"DEBUG: Usuario ID: {id_usuario}")
+        
+        # Verificar que el usuario existe
+        cursor.execute("SELECT id_usuario, nombre, apellido, rol FROM usuario WHERE id_usuario = %s", (id_usuario,))
+        usuario = cursor.fetchone()
+        
+        if not usuario:
+            flash("Usuario no encontrado.", "danger")
+            cursor.close()
+            conn.close()
+            return redirect(url_for('listar_usuarios'))
+        
         # Eliminar todos los permisos actuales del usuario
         cursor.execute("DELETE FROM usuario_permiso WHERE id_usuario = %s", (id_usuario,))
+        deleted_count = cursor.rowcount
+        print(f"DEBUG: Permisos eliminados: {deleted_count}")
         
         # Insertar nuevos permisos
         if permisos_seleccionados:
@@ -1368,13 +1406,28 @@ def actualizar_permisos_usuario(id_usuario):
                 INSERT INTO usuario_permiso (id_usuario, id_permiso, asignado_por)
                 VALUES (%s, %s, %s)
             """, valores)
+            inserted_count = cursor.rowcount
+            print(f"DEBUG: Permisos insertados: {inserted_count}")
+        else:
+            print("DEBUG: No se seleccionaron permisos")
         
         conn.commit()
-        flash(f"Permisos actualizados exitosamente.", "success")
+        
+        # Si el usuario modificado es el mismo que está logueado, actualizar su sesión
+        if id_usuario == session.get('user_id'):
+            session['permisos'] = obtener_permisos_usuario(id_usuario)
+            print(f"DEBUG: Sesión actualizada para usuario {id_usuario}")
+        
+        flash(f"Permisos actualizados exitosamente para {usuario['nombre']} {usuario['apellido']}. {len(permisos_seleccionados) if permisos_seleccionados else 0} permiso(s) asignado(s).", "success")
         
     except mysql.connector.Error as err:
         flash(f"Error al actualizar permisos: {err}", "danger")
         conn.rollback()
+        print(f"ERROR: {err}")
+    except Exception as e:
+        flash(f"Error inesperado: {str(e)}", "danger")
+        conn.rollback()
+        print(f"ERROR INESPERADO: {e}")
     finally:
         cursor.close()
         conn.close()
