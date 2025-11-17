@@ -98,16 +98,16 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if session.rol == 'ADMIN' or tiene_permiso_template('pagos.crear') or session.rol in ['ADMIN', 'TESORERO'] or tiene_permiso_template('lecturas.editar') %}
+                                        {% if tiene_permiso_template('pagos.crear') or tiene_permiso_template('lecturas.editar') %}
                                         <div class="btn-group btn-group-sm" role="group">
-                                            {% if session.rol == 'ADMIN' or tiene_permiso_template('pagos.crear') or session.rol in ['ADMIN', 'TESORERO'] %}
+                                            {% if tiene_permiso_template('pagos.crear') %}
                                             <button type="button" 
                                                     class="btn btn-success" 
                                                     onclick="confirmarPago({{ factura.id_lectura }}, '{{ factura.nombre }} {{ factura.apellido }}', {{ factura.monto_total }})">
                                                 <i class="bi bi-check-circle"></i> Registrar Pago
                                             </button>
                                             {% endif %}
-                                            {% if session.rol == 'ADMIN' or tiene_permiso_template('lecturas.editar') %}
+                                            {% if tiene_permiso_template('lecturas.editar') %}
                                             <button type="button" 
                                                     class="btn btn-primary" 
                                                     onclick="editarLecturaDesdePago({{ factura.id_lectura }})"

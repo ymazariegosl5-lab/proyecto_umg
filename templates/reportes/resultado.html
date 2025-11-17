@@ -89,7 +89,7 @@
                             <table class="table table-striped table-hover table-bordered" id="tablaReporte">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th>Cliente</th>
+                                        <th style="min-width: 200px; max-width: 300px;">Cliente</th>
                                         <th>Contador</th>
                                         <th>Sector</th>
                                         <th class="text-center">Facturas Pendientes</th>
@@ -102,7 +102,7 @@
                                     {% set total_facturas = namespace(value=0) %}
                                     {% for registro in datos %}
                                     <tr>
-                                        <td><strong>{{ registro.nombre }} {{ registro.apellido }}</strong></td>
+                                        <td style="word-wrap: break-word; word-break: break-word; white-space: normal; max-width: 300px;"><strong>{{ registro.nombre }} {{ registro.apellido }}</strong></td>
                                         <td><code>{{ registro.no_contador }}</code></td>
                                         <td><span class="badge bg-info">{{ registro.nombre_sector }}</span></td>
                                         <td class="text-center"><span class="badge bg-warning">{{ registro.facturas_pendientes }}</span></td>

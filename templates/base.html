@@ -47,42 +47,42 @@
                             <i class="bi bi-house-door"></i> Inicio
                         </a>
                     </li>
-                    {% if session.rol == 'ADMIN' or 'clientes.crear' in (session.permisos or []) %}
+                    {% if tiene_permiso_template('clientes.crear') %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('registrar_cliente') }}">
                             <i class="bi bi-person-plus"></i> Registrar Cliente
                         </a>
                     </li>
                     {% endif %}
-                    {% if session.rol in ['ADMIN', 'LECTOR', 'TESORERO'] or 'lecturas.crear' in (session.permisos or []) %}
+                    {% if tiene_permiso_template('lecturas.crear') %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('registro_lectura') }}">
                             <i class="bi bi-file-earmark-text"></i> Lecturas
                         </a>
                     </li>
                     {% endif %}
-                    {% if session.rol in ['ADMIN', 'TESORERO'] or 'pagos.registrar' in (session.permisos or []) %}
+                    {% if tiene_permiso_template('pagos.ver') %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('ver_facturas_pendientes') }}">
                             <i class="bi bi-cash-stack"></i> Pagos
                         </a>
                     </li>
                     {% endif %}
-                    {% if session.rol in ['ADMIN', 'TESORERO', 'PRESIDENTE'] or 'reportes.ver' in (session.permisos or []) %}
+                    {% if tiene_permiso_template('reportes.ver') %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('generador_reportes') }}">
                             <i class="bi bi-graph-up"></i> Reportes
                         </a>
                     </li>
                     {% endif %}
-                    {% if 'sectores.ver' in (session.permisos or []) or session.rol %}
+                    {% if tiene_permiso_template('sectores.ver') %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('ver_sectores') }}">
                             <i class="bi bi-geo-alt"></i> Sectores
                         </a>
                     </li>
                     {% endif %}
-                    {% if session.rol == 'ADMIN' %}
+                    {% if tiene_permiso_template('usuarios.ver') %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('listar_usuarios') }}">
                             <i class="bi bi-people"></i> Usuarios

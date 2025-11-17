@@ -156,14 +156,14 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if session.rol == 'ADMIN' or tiene_permiso_template('lecturas.editar') or tiene_permiso_template('lecturas.eliminar') %}
+                                        {% if tiene_permiso_template('lecturas.editar') or tiene_permiso_template('lecturas.eliminar') %}
                                         <div class="btn-group btn-group-sm" role="group">
-                                            {% if session.rol == 'ADMIN' or tiene_permiso_template('lecturas.editar') %}
+                                            {% if tiene_permiso_template('lecturas.editar') %}
                                             <button type="button" class="btn btn-primary" title="Editar Lectura" onclick="editarLectura({{ lectura.id_lectura }})">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                             {% endif %}
-                                            {% if session.rol == 'ADMIN' or tiene_permiso_template('lecturas.eliminar') %}
+                                            {% if tiene_permiso_template('lecturas.eliminar') %}
                                             <button type="button" class="btn btn-danger" title="Eliminar Lectura" onclick="eliminarLectura({{ lectura.id_lectura }})">
                                                 <i class="bi bi-trash"></i>
                                             </button>

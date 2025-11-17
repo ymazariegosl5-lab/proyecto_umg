@@ -36,11 +36,6 @@ def inject_permisos():
             return False
         
         user_id = session.get('user_id')
-        user_rol = session.get('rol')
-        
-        # Si es ADMIN, tiene todos los permisos
-        if user_rol == 'ADMIN':
-            return True
         
         # Verificar siempre en la BD para asegurar que los permisos estén actualizados
         # Esto es importante porque los permisos pueden cambiar mientras el usuario está logueado
@@ -79,23 +74,17 @@ def tiene_permiso(id_usuario, codigo_permiso):
     
     try:
         cursor = conn.cursor(dictionary=True)
-        # Verificar si el usuario es ADMIN (tiene todos los permisos)
-        cursor.execute("SELECT rol FROM usuario WHERE id_usuario = %s AND activo = TRUE", (id_usuario,))
+        # Verificar que el usuario existe y está activo
+        cursor.execute("SELECT activo FROM usuario WHERE id_usuario = %s", (id_usuario,))
         usuario = cursor.fetchone()
         
-        if not usuario:
+        if not usuario or not usuario['activo']:
             print(f"DEBUG tiene_permiso: Usuario {id_usuario} no encontrado o inactivo")
             cursor.close()
             conn.close()
             return False
         
-        if usuario and usuario['rol'] == 'ADMIN':
-            print(f"DEBUG tiene_permiso: Usuario {id_usuario} es ADMIN, tiene permiso {codigo_permiso}")
-            cursor.close()
-            conn.close()
-            return True
-        
-        # Verificar permiso específico
+        # Verificar permiso específico - los permisos son la única fuente de control
         cursor.execute("""
             SELECT COUNT(*) as tiene_permiso
             FROM usuario_permiso up
@@ -130,8 +119,8 @@ def obtener_permisos_usuario(id_usuario):
     
     try:
         cursor = conn.cursor(dictionary=True)
-        # Si es ADMIN, retornar todos los permisos
-        cursor.execute("SELECT rol FROM usuario WHERE id_usuario = %s", (id_usuario,))
+        # Verificar que el usuario existe
+        cursor.execute("SELECT id_usuario FROM usuario WHERE id_usuario = %s", (id_usuario,))
         usuario = cursor.fetchone()
         
         if not usuario:
@@ -140,19 +129,15 @@ def obtener_permisos_usuario(id_usuario):
             conn.close()
             return []
         
-        if usuario and usuario['rol'] == 'ADMIN':
-            cursor.execute("SELECT codigo_permiso FROM permiso WHERE activo = TRUE")
-            permisos = [row['codigo_permiso'] for row in cursor.fetchall()]
-            print(f"DEBUG obtener_permisos_usuario: Usuario {id_usuario} es ADMIN, tiene {len(permisos)} permisos")
-        else:
-            cursor.execute("""
-                SELECT p.codigo_permiso
-                FROM usuario_permiso up
-                JOIN permiso p ON up.id_permiso = p.id_permiso
-                WHERE up.id_usuario = %s AND p.activo = TRUE
-            """, (id_usuario,))
-            permisos = [row['codigo_permiso'] for row in cursor.fetchall()]
-            print(f"DEBUG obtener_permisos_usuario: Usuario {id_usuario} tiene {len(permisos)} permisos: {permisos}")
+        # Obtener permisos asignados - los permisos son la única fuente de control
+        cursor.execute("""
+            SELECT p.codigo_permiso
+            FROM usuario_permiso up
+            JOIN permiso p ON up.id_permiso = p.id_permiso
+            WHERE up.id_usuario = %s AND p.activo = TRUE
+        """, (id_usuario,))
+        permisos = [row['codigo_permiso'] for row in cursor.fetchall()]
+        print(f"DEBUG obtener_permisos_usuario: Usuario {id_usuario} tiene {len(permisos)} permisos: {permisos}")
         
         cursor.close()
         conn.close()
@@ -176,10 +161,12 @@ def login_required(f):
     return decorated_function
 
 def admin_required(f):
+    """Decorador para verificar permisos de administración - DEPRECADO: usar @permiso_required en su lugar"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'rol' not in session or session['rol'] != 'ADMIN':
-            flash("Acceso denegado. Se requiere rol de Administrador.", "danger")
+        # Verificar permisos de administración en lugar de rol
+        if not tiene_permiso(session.get('user_id'), 'usuarios.ver'):
+            flash("Acceso denegado. Se requieren permisos de administración.", "danger")
             return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     return decorated_function
@@ -337,7 +324,7 @@ def dashboard():
 
 @app.route('/clientes/registro', methods=['GET', 'POST'])
 @login_required
-@admin_required # Solo el ADMIN puede registrar nuevos clientes (R1)
+@permiso_required('clientes.crear')
 def registrar_cliente():
     """Registrar Nuevo Cliente (R1)."""
     conn = get_db_connection()
@@ -386,7 +373,7 @@ def registrar_cliente():
 @login_required
 def obtener_cliente(id_cliente):
     """Obtener datos de un cliente para editar"""
-    if not (session.get('rol') == 'ADMIN' or tiene_permiso(session.get('user_id'), 'clientes.editar')):
+    if not tiene_permiso(session.get('user_id'), 'clientes.editar'):
         return jsonify({'error': 'No tienes permiso para esta acción'}), 403
     
     conn = get_db_connection()
@@ -415,7 +402,7 @@ def obtener_cliente(id_cliente):
 @login_required
 def actualizar_cliente(id_cliente):
     """Actualizar datos de un cliente"""
-    if not (session.get('rol') == 'ADMIN' or tiene_permiso(session.get('user_id'), 'clientes.editar')):
+    if not tiene_permiso(session.get('user_id'), 'clientes.editar'):
         return jsonify({'error': 'No tienes permiso para esta acción'}), 403
     
     data = request.json
@@ -450,7 +437,7 @@ def actualizar_cliente(id_cliente):
 @login_required
 def obtener_lectura(id_lectura):
     """Obtener datos de una lectura para editar"""
-    if not (session.get('rol') == 'ADMIN' or tiene_permiso(session.get('user_id'), 'lecturas.editar')):
+    if not tiene_permiso(session.get('user_id'), 'lecturas.editar'):
         return jsonify({'error': 'No tienes permiso para esta acción'}), 403
     
     conn = get_db_connection()
@@ -481,7 +468,7 @@ def obtener_lectura(id_lectura):
 @login_required
 def actualizar_lectura(id_lectura):
     """Actualizar datos de una lectura"""
-    if not (session.get('rol') == 'ADMIN' or tiene_permiso(session.get('user_id'), 'lecturas.editar')):
+    if not tiene_permiso(session.get('user_id'), 'lecturas.editar'):
         return jsonify({'error': 'No tienes permiso para esta acción'}), 403
     
     data = request.json
@@ -523,7 +510,7 @@ def actualizar_lectura(id_lectura):
 
 @app.route('/procesos/lectura', methods=['GET', 'POST'])
 @login_required
-@roles_required('ADMIN', 'LECTOR', 'TESORERO')
+@permiso_required('lecturas.crear')
 def registro_lectura():
     """Registro de Lectura y Facturación (R1, R2, R3, R4)."""
     conn = get_db_connection()
@@ -664,7 +651,7 @@ def buscar_clientes():
 
 @app.route('/procesos/pago', methods=['GET'])
 @login_required
-@roles_required('ADMIN', 'TESORERO')
+@permiso_required('pagos.ver')
 def ver_facturas_pendientes():
     """Ver facturas pendientes de pago."""
     conn = get_db_connection()
@@ -1105,8 +1092,10 @@ def generar_pdf_reporte_morosos(buffer, datos):
     
     for registro in datos:
         fecha_antigua = registro['fecha_mas_antigua'].strftime('%d/%m/%Y') if isinstance(registro['fecha_mas_antigua'], date) else str(registro['fecha_mas_antigua'])
+        nombre_completo = f"{registro['nombre']} {registro['apellido']}"
+        # Usar Paragraph para que el texto largo se ajuste automáticamente
         table_data.append([
-            f"{registro['nombre']} {registro['apellido']}",
+            Paragraph(nombre_completo, normal_style),
             registro['no_contador'],
             registro['nombre_sector'],
             str(registro['facturas_pendientes']),
@@ -1124,8 +1113,8 @@ def generar_pdf_reporte_morosos(buffer, datos):
         ''
     ])
     
-    # Crear tabla
-    table = Table(table_data, colWidths=[2*inch, 1*inch, 1.2*inch, 0.8*inch, 1*inch, 1*inch])
+    # Crear tabla con ancho aumentado para la columna de Cliente
+    table = Table(table_data, colWidths=[2.5*inch, 1*inch, 1.2*inch, 0.8*inch, 1*inch, 1*inch])
     table.setStyle(TableStyle([
         # Encabezado
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#721c24')),
@@ -1412,7 +1401,7 @@ def generar_pdf_reporte_individual(buffer, cliente, lecturas, pagos, estadistica
 
 @app.route('/reportes/generador')
 @login_required
-@roles_required('ADMIN', 'TESORERO', 'PRESIDENTE')
+@permiso_required('reportes.ver')
 def generador_reportes():
     """Generador de reportes."""
     return render_template('reportes/generador.html')
@@ -1420,7 +1409,7 @@ def generador_reportes():
 
 @app.route('/reportes/generar', methods=['POST'])
 @login_required
-@roles_required('ADMIN', 'TESORERO', 'PRESIDENTE')
+@permiso_required('reportes.ver')
 def generar_reporte():
     """Generar reporte específico."""
     tipo_reporte = request.form.get('tipo_reporte')
@@ -1498,7 +1487,7 @@ def generar_reporte():
 
 @app.route('/reportes/exportar-pdf/<tipo_reporte>')
 @login_required
-@roles_required('ADMIN', 'TESORERO', 'PRESIDENTE')
+@permiso_required('reportes.ver')
 def exportar_reporte_pdf(tipo_reporte):
     """Exportar reporte en formato PDF profesional"""
     fecha_inicio = request.args.get('fecha_inicio')
@@ -1602,7 +1591,7 @@ def exportar_reporte_pdf(tipo_reporte):
 
 @app.route('/reportes/individual')
 @login_required
-@roles_required('ADMIN', 'TESORERO', 'PRESIDENTE')
+@permiso_required('reportes.ver')
 def reporte_individual_form():
     """Formulario para seleccionar cliente para reporte individual"""
     conn = get_db_connection()
@@ -1630,7 +1619,7 @@ def reporte_individual_form():
 
 @app.route('/reportes/individual/<int:id_cliente>')
 @login_required
-@roles_required('ADMIN', 'TESORERO', 'PRESIDENTE')
+@permiso_required('reportes.ver')
 def reporte_individual_cliente(id_cliente):
     """Generar reporte individual de un cliente"""
     conn = get_db_connection()
@@ -1739,7 +1728,7 @@ def reporte_individual_cliente(id_cliente):
 
 @app.route('/reportes/individual/<int:id_cliente>/pdf')
 @login_required
-@roles_required('ADMIN', 'TESORERO', 'PRESIDENTE')
+@permiso_required('reportes.ver')
 def exportar_reporte_individual_pdf(id_cliente):
     """Exportar reporte individual en formato PDF profesional"""
     conn = get_db_connection()
@@ -1943,7 +1932,7 @@ def ver_clientes_sector(id_sector):
 
 @app.route('/admin/usuarios')
 @login_required
-@admin_required
+@permiso_required('usuarios.ver')
 def listar_usuarios():
     """Listar todos los usuarios del sistema (Solo ADMIN)"""
     conn = get_db_connection()
@@ -1968,7 +1957,7 @@ def listar_usuarios():
 
 @app.route('/admin/usuarios/nuevo', methods=['GET'])
 @login_required
-@admin_required
+@permiso_required('usuarios.crear')
 def nuevo_usuario_form():
     """Mostrar formulario para crear nuevo usuario (Solo ADMIN)"""
     return render_template('admin/nuevo_usuario.html')
@@ -1976,7 +1965,7 @@ def nuevo_usuario_form():
 
 @app.route('/admin/usuarios/crear', methods=['POST'])
 @login_required
-@admin_required
+@permiso_required('usuarios.crear')
 def crear_usuario():
     """Crear nuevo usuario (Solo ADMIN)"""
     conn = get_db_connection()
@@ -2054,7 +2043,7 @@ def crear_usuario():
 
 @app.route('/admin/usuarios/toggle/<int:id_usuario>', methods=['POST'])
 @login_required
-@admin_required
+@permiso_required('usuarios.editar')
 def toggle_usuario(id_usuario):
     """Activar/Desactivar usuario (Solo ADMIN)"""
     # Evitar que el admin se desactive a sí mismo
@@ -2102,7 +2091,7 @@ def toggle_usuario(id_usuario):
 @login_required
 def obtener_usuario(id_usuario):
     """Obtener datos de un usuario para editar"""
-    if not (session.get('rol') == 'ADMIN' or tiene_permiso(session.get('user_id'), 'usuarios.editar')):
+    if not tiene_permiso(session.get('user_id'), 'usuarios.editar'):
         return jsonify({'error': 'No tienes permiso para esta acción'}), 403
     
     conn = get_db_connection()
@@ -2130,7 +2119,7 @@ def obtener_usuario(id_usuario):
 @login_required
 def actualizar_usuario(id_usuario):
     """Actualizar datos de un usuario"""
-    if not (session.get('rol') == 'ADMIN' or tiene_permiso(session.get('user_id'), 'usuarios.editar')):
+    if not tiene_permiso(session.get('user_id'), 'usuarios.editar'):
         return jsonify({'error': 'No tienes permiso para esta acción'}), 403
     
     data = request.json
@@ -2194,7 +2183,7 @@ def actualizar_usuario(id_usuario):
 
 @app.route('/admin/usuarios/cambiar-password/<int:id_usuario>', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@permiso_required('usuarios.cambiar_password')
 def cambiar_password_usuario(id_usuario):
     """Cambiar contraseña de un usuario (Solo ADMIN)"""
     conn = get_db_connection()
@@ -2263,7 +2252,7 @@ def cambiar_password_usuario(id_usuario):
 
 @app.route('/admin/usuarios/<int:id_usuario>/permisos', methods=['GET'])
 @login_required
-@admin_required
+@permiso_required('usuarios.permisos')
 def gestionar_permisos_usuario(id_usuario):
     """Gestionar permisos de un usuario específico"""
     conn = get_db_connection()
@@ -2321,7 +2310,7 @@ def gestionar_permisos_usuario(id_usuario):
 
 @app.route('/admin/usuarios/<int:id_usuario>/permisos', methods=['POST'])
 @login_required
-@admin_required
+@permiso_required('usuarios.permisos')
 def actualizar_permisos_usuario(id_usuario):
     """Actualizar permisos de un usuario"""
     conn = get_db_connection()
