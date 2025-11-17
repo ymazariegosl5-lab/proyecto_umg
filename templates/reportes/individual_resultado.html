@@ -232,6 +232,10 @@
             <a href="{{ url_for('generador_reportes') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Volver a Reportes
             </a>
+            <a href="{{ url_for('exportar_reporte_individual_pdf', id_cliente=cliente.id_cliente) }}" 
+               class="btn btn-danger float-end ms-2" title="Exportar PDF profesional">
+                <i class="bi bi-file-earmark-pdf"></i> Exportar PDF Profesional
+            </a>
             <button onclick="window.print()" class="btn btn-success float-end">
                 <i class="bi bi-printer"></i> Imprimir Reporte
             </button>

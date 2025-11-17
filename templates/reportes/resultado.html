@@ -173,6 +173,17 @@
             <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-house"></i> Volver al Dashboard
             </a>
+            {% if tipo == 'morosos' %}
+            <a href="{{ url_for('exportar_reporte_pdf', tipo_reporte=tipo) }}" 
+               class="btn btn-danger float-end ms-2" title="Exportar PDF profesional">
+                <i class="bi bi-file-earmark-pdf"></i> Exportar PDF Profesional
+            </a>
+            {% else %}
+            <a href="{{ url_for('exportar_reporte_pdf', tipo_reporte=tipo, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin) }}" 
+               class="btn btn-danger float-end ms-2" title="Exportar PDF profesional">
+                <i class="bi bi-file-earmark-pdf"></i> Exportar PDF Profesional
+            </a>
+            {% endif %}
             <button onclick="window.print()" class="btn btn-success float-end">
                 <i class="bi bi-printer"></i> Imprimir Reporte
             </button>
@@ -205,12 +216,6 @@ $(document).ready(function() {
                     extend: 'excel',
                     text: '<i class="bi bi-file-earmark-excel"></i> Excel',
                     className: 'btn btn-success btn-sm',
-                    title: '{{ titulo }}'
-                },
-                {
-                    extend: 'pdf',
-                    text: '<i class="bi bi-file-earmark-pdf"></i> PDF',
-                    className: 'btn btn-danger btn-sm',
                     title: '{{ titulo }}'
                 },
                 {

@@ -951,6 +951,463 @@ def generar_recibo_pdf(buffer, datos):
     c.save()
 
 
+def generar_pdf_reporte_ingresos(buffer, datos, fecha_inicio, fecha_fin):
+    """Generar PDF profesional para reporte de ingresos"""
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                            rightMargin=72, leftMargin=72,
+                            topMargin=72, bottomMargin=18)
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        textColor=colors.HexColor('#1a472a'),
+        spaceAfter=30,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=12,
+        textColor=colors.HexColor('#2d5016'),
+        spaceAfter=12,
+        fontName='Helvetica-Bold'
+    )
+    
+    normal_style = styles['Normal']
+    normal_style.fontSize = 10
+    
+    # Contenido
+    story = []
+    
+    # Encabezado
+    story.append(Paragraph("COMITÉ DE AGUA POTABLE CORINTO S.L", title_style))
+    story.append(Paragraph("REPORTE DE INGRESOS", heading_style))
+    story.append(Spacer(1, 12))
+    
+    # Información del reporte
+    info_text = f"""
+    <b>Período:</b> {fecha_inicio} al {fecha_fin}<br/>
+    <b>Fecha de Generación:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}<br/>
+    <b>Total de Registros:</b> {len(datos)}
+    """
+    story.append(Paragraph(info_text, normal_style))
+    story.append(Spacer(1, 20))
+    
+    # Calcular total
+    total_ingresos = sum(registro['total'] for registro in datos)
+    
+    # Tabla de datos
+    table_data = [['Fecha', 'Monto (Q)']]
+    
+    for registro in datos:
+        fecha_str = registro['fecha'].strftime('%d/%m/%Y') if isinstance(registro['fecha'], date) else str(registro['fecha'])
+        table_data.append([
+            fecha_str,
+            f"{registro['total']:.2f}"
+        ])
+    
+    # Fila de total
+    table_data.append([
+        Paragraph('<b>TOTAL INGRESOS</b>', normal_style),
+        Paragraph(f'<b>Q{total_ingresos:.2f}</b>', normal_style)
+    ])
+    
+    # Crear tabla
+    table = Table(table_data, colWidths=[4*inch, 2*inch])
+    table.setStyle(TableStyle([
+        # Encabezado
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2d5016')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('TOPPADDING', (0, 0), (-1, 0), 12),
+        # Filas de datos
+        ('BACKGROUND', (0, 1), (-1, -2), colors.beige),
+        ('TEXTCOLOR', (0, 1), (-1, -2), colors.black),
+        ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -2), 10),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f5f5f5')]),
+        # Fila de total
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#d4edda')),
+        ('TEXTCOLOR', (0, -1), (-1, -1), colors.HexColor('#155724')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, -1), (-1, -1), 11),
+        ('TOPPADDING', (0, -1), (-1, -1), 12),
+        ('BOTTOMPADDING', (0, -1), (-1, -1), 12),
+    ]))
+    
+    story.append(table)
+    story.append(Spacer(1, 20))
+    
+    # Pie de página
+    footer_text = f"<i>Reporte generado el {datetime.now().strftime('%d/%m/%Y a las %H:%M')}</i>"
+    story.append(Paragraph(footer_text, normal_style))
+    
+    # Construir PDF
+    doc.build(story)
+
+
+def generar_pdf_reporte_morosos(buffer, datos):
+    """Generar PDF profesional para reporte de clientes morosos"""
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                            rightMargin=72, leftMargin=72,
+                            topMargin=72, bottomMargin=18)
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        textColor=colors.HexColor('#721c24'),
+        spaceAfter=30,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    normal_style = styles['Normal']
+    normal_style.fontSize = 9
+    
+    # Contenido
+    story = []
+    
+    # Encabezado
+    story.append(Paragraph("COMITÉ DE AGUA POTABLE CORINTO S.L", title_style))
+    story.append(Paragraph("REPORTE DE CLIENTES MOROSOS", 
+                          ParagraphStyle('Heading', parent=styles['Heading2'], 
+                                        fontSize=12, textColor=colors.HexColor('#721c24'),
+                                        spaceAfter=12, alignment=TA_CENTER, fontName='Helvetica-Bold')))
+    story.append(Spacer(1, 12))
+    
+    # Información del reporte
+    total_deuda = sum(registro['deuda_total'] for registro in datos)
+    total_facturas = sum(registro['facturas_pendientes'] for registro in datos)
+    
+    info_text = f"""
+    <b>Fecha de Generación:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}<br/>
+    <b>Total de Clientes Morosos:</b> {len(datos)}<br/>
+    <b>Total de Facturas Pendientes:</b> {total_facturas}<br/>
+    <b>Deuda Total:</b> Q{total_deuda:.2f}
+    """
+    story.append(Paragraph(info_text, normal_style))
+    story.append(Spacer(1, 20))
+    
+    # Tabla de datos
+    table_data = [['Cliente', 'Contador', 'Sector', 'Facturas', 'Deuda (Q)', 'Fecha Antigua']]
+    
+    for registro in datos:
+        fecha_antigua = registro['fecha_mas_antigua'].strftime('%d/%m/%Y') if isinstance(registro['fecha_mas_antigua'], date) else str(registro['fecha_mas_antigua'])
+        table_data.append([
+            f"{registro['nombre']} {registro['apellido']}",
+            registro['no_contador'],
+            registro['nombre_sector'],
+            str(registro['facturas_pendientes']),
+            f"{registro['deuda_total']:.2f}",
+            fecha_antigua
+        ])
+    
+    # Fila de total
+    table_data.append([
+        Paragraph('<b>TOTALES</b>', normal_style),
+        '',
+        '',
+        Paragraph(f'<b>{total_facturas}</b>', normal_style),
+        Paragraph(f'<b>Q{total_deuda:.2f}</b>', normal_style),
+        ''
+    ])
+    
+    # Crear tabla
+    table = Table(table_data, colWidths=[2*inch, 1*inch, 1.2*inch, 0.8*inch, 1*inch, 1*inch])
+    table.setStyle(TableStyle([
+        # Encabezado
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#721c24')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (0, 1), (0, -2), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('TOPPADDING', (0, 0), (-1, 0), 12),
+        # Filas de datos
+        ('BACKGROUND', (0, 1), (-1, -2), colors.HexColor('#fff3cd')),
+        ('TEXTCOLOR', (0, 1), (-1, -2), colors.black),
+        ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -2), 9),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#fff3cd')]),
+        # Fila de total
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#f8d7da')),
+        ('TEXTCOLOR', (0, -1), (-1, -1), colors.HexColor('#721c24')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, -1), (-1, -1), 10),
+        ('TOPPADDING', (0, -1), (-1, -1), 12),
+        ('BOTTOMPADDING', (0, -1), (-1, -1), 12),
+    ]))
+    
+    story.append(table)
+    story.append(Spacer(1, 20))
+    
+    # Pie de página
+    footer_text = f"<i>Reporte generado el {datetime.now().strftime('%d/%m/%Y a las %H:%M')}</i>"
+    story.append(Paragraph(footer_text, normal_style))
+    
+    # Construir PDF
+    doc.build(story)
+
+
+def generar_pdf_reporte_consumo(buffer, datos, fecha_inicio, fecha_fin):
+    """Generar PDF profesional para reporte de consumo"""
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                            rightMargin=72, leftMargin=72,
+                            topMargin=72, bottomMargin=18)
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        textColor=colors.HexColor('#004085'),
+        spaceAfter=30,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    normal_style = styles['Normal']
+    normal_style.fontSize = 9
+    
+    # Contenido
+    story = []
+    
+    # Encabezado
+    story.append(Paragraph("COMITÉ DE AGUA POTABLE CORINTO S.L", title_style))
+    story.append(Paragraph("REPORTE DE CONSUMO DE AGUA", 
+                          ParagraphStyle('Heading', parent=styles['Heading2'], 
+                                        fontSize=12, textColor=colors.HexColor('#004085'),
+                                        spaceAfter=12, alignment=TA_CENTER, fontName='Helvetica-Bold')))
+    story.append(Spacer(1, 12))
+    
+    # Información del reporte
+    info_text = f"""
+    <b>Período:</b> {fecha_inicio} al {fecha_fin}<br/>
+    <b>Fecha de Generación:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}<br/>
+    <b>Total de Clientes:</b> {len(datos)}
+    """
+    story.append(Paragraph(info_text, normal_style))
+    story.append(Spacer(1, 20))
+    
+    # Tabla de datos
+    table_data = [['Cliente', 'Contador', 'Sector', 'Promedio (m³)', 'Máximo (m³)', 'Mínimo (m³)']]
+    
+    for registro in datos:
+        table_data.append([
+            f"{registro['nombre']} {registro['apellido']}",
+            registro['no_contador'],
+            registro['nombre_sector'],
+            f"{registro['consumo_promedio']:.2f}",
+            f"{registro['consumo_maximo']:.2f}",
+            f"{registro['consumo_minimo']:.2f}"
+        ])
+    
+    # Crear tabla
+    table = Table(table_data, colWidths=[2*inch, 1*inch, 1.2*inch, 1*inch, 1*inch, 1*inch])
+    table.setStyle(TableStyle([
+        # Encabezado
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#004085')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (0, 1), (0, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('TOPPADDING', (0, 0), (-1, 0), 12),
+        # Filas de datos
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#cce5ff')),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#cce5ff')]),
+    ]))
+    
+    story.append(table)
+    story.append(Spacer(1, 20))
+    
+    # Pie de página
+    footer_text = f"<i>Reporte generado el {datetime.now().strftime('%d/%m/%Y a las %H:%M')}</i>"
+    story.append(Paragraph(footer_text, normal_style))
+    
+    # Construir PDF
+    doc.build(story)
+
+
+def generar_pdf_reporte_individual(buffer, cliente, lecturas, pagos, estadisticas, facturas_pendientes):
+    """Generar PDF profesional para reporte individual de cliente"""
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                            rightMargin=72, leftMargin=72,
+                            topMargin=72, bottomMargin=18)
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        textColor=colors.HexColor('#1a472a'),
+        spaceAfter=30,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=12,
+        textColor=colors.HexColor('#2d5016'),
+        spaceAfter=12,
+        fontName='Helvetica-Bold'
+    )
+    
+    normal_style = styles['Normal']
+    normal_style.fontSize = 10
+    
+    # Contenido
+    story = []
+    
+    # Encabezado
+    story.append(Paragraph("COMITÉ DE AGUA POTABLE CORINTO S.L", title_style))
+    story.append(Paragraph("REPORTE INDIVIDUAL DE CLIENTE", heading_style))
+    story.append(Spacer(1, 20))
+    
+    # Información del cliente
+    story.append(Paragraph("INFORMACIÓN DEL CLIENTE", heading_style))
+    cliente_text = f"""
+    <b>Nombre:</b> {cliente['nombre']} {cliente['apellido']}<br/>
+    <b>Número de Contador:</b> {cliente['no_contador']}<br/>
+    <b>Sector:</b> {cliente['nombre_sector']}<br/>
+    <b>Teléfono:</b> {cliente.get('telefono', 'No registrado')}<br/>
+    <b>Estado:</b> {'Activo' if cliente.get('activo', True) else 'Inactivo'}
+    """
+    story.append(Paragraph(cliente_text, normal_style))
+    story.append(Spacer(1, 20))
+    
+    # Estadísticas
+    story.append(Paragraph("ESTADÍSTICAS", heading_style))
+    stats_text = f"""
+    <b>Total de Lecturas:</b> {estadisticas['total_lecturas']}<br/>
+    <b>Consumo Promedio:</b> {estadisticas['consumo_promedio']:.2f} m³<br/>
+    <b>Consumo Máximo:</b> {estadisticas['consumo_maximo']:.2f} m³<br/>
+    <b>Consumo Mínimo:</b> {estadisticas['consumo_minimo']:.2f} m³<br/>
+    <b>Total Pagado:</b> Q{estadisticas['total_pagado']:.2f}<br/>
+    <b>Deuda Actual:</b> Q{estadisticas['deuda_total']:.2f}
+    """
+    story.append(Paragraph(stats_text, normal_style))
+    story.append(Spacer(1, 20))
+    
+    # Facturas pendientes
+    if facturas_pendientes:
+        story.append(Paragraph("FACTURAS PENDIENTES", heading_style))
+        table_data = [['Fecha Lectura', 'Consumo (m³)', 'Monto (Q)', 'Días Mora']]
+        
+        for factura in facturas_pendientes:
+            fecha_str = factura['fecha_lectura'].strftime('%d/%m/%Y') if isinstance(factura['fecha_lectura'], date) else str(factura['fecha_lectura'])
+            table_data.append([
+                fecha_str,
+                f"{factura['consumo_m3']:.2f}",
+                f"{factura['monto_total']:.2f}",
+                str(factura.get('dias_mora', 0))
+            ])
+        
+        table = Table(table_data, colWidths=[2*inch, 1.5*inch, 1.5*inch, 1*inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#721c24')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#fff3cd')),
+            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ]))
+        story.append(table)
+        story.append(Spacer(1, 20))
+    
+    # Historial de lecturas
+    if lecturas:
+        story.append(Paragraph("HISTORIAL DE LECTURAS", heading_style))
+        table_data = [['Fecha', 'Lect. Ant.', 'Lect. Act.', 'Consumo (m³)', 'Monto (Q)', 'Estado']]
+        
+        for lectura in lecturas[:20]:  # Limitar a 20 para no hacer el PDF muy largo
+            fecha_str = lectura['fecha_lectura'].strftime('%d/%m/%Y') if isinstance(lectura['fecha_lectura'], date) else str(lectura['fecha_lectura'])
+            estado = 'Pagado' if lectura['estado_pago'] == 'PAGADO' else 'Pendiente'
+            table_data.append([
+                fecha_str,
+                f"{lectura['lectura_anterior']:.2f}",
+                f"{lectura['lectura_actual']:.2f}",
+                f"{lectura['consumo_m3']:.2f}",
+                f"{lectura['monto_total']:.2f}",
+                estado
+            ])
+        
+        table = Table(table_data, colWidths=[1*inch, 1*inch, 1*inch, 1*inch, 1*inch, 0.8*inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#004085')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#cce5ff')),
+            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#cce5ff')]),
+        ]))
+        story.append(table)
+        story.append(Spacer(1, 20))
+    
+    # Historial de pagos
+    if pagos:
+        story.append(Paragraph("HISTORIAL DE PAGOS", heading_style))
+        table_data = [['Fecha Pago', 'Período', 'Consumo (m³)', 'Monto (Q)']]
+        
+        for pago in pagos[:20]:  # Limitar a 20
+            fecha_pago_str = pago['fecha_pago'].strftime('%d/%m/%Y') if isinstance(pago['fecha_pago'], date) else str(pago['fecha_pago'])
+            fecha_lectura_str = pago['fecha_lectura'].strftime('%d/%m/%Y') if isinstance(pago['fecha_lectura'], date) else str(pago['fecha_lectura'])
+            table_data.append([
+                fecha_pago_str,
+                fecha_lectura_str,
+                f"{pago['consumo_m3']:.2f}",
+                f"{pago['monto_pagado']:.2f}"
+            ])
+        
+        table = Table(table_data, colWidths=[2*inch, 2*inch, 1.5*inch, 1.5*inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#155724')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#d4edda')),
+            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#d4edda')]),
+        ]))
+        story.append(table)
+    
+    # Pie de página
+    story.append(Spacer(1, 20))
+    footer_text = f"<i>Reporte generado el {datetime.now().strftime('%d/%m/%Y a las %H:%M')}</i>"
+    story.append(Paragraph(footer_text, normal_style))
+    
+    # Construir PDF
+    doc.build(story)
+
+
 # --- RUTAS DE REPORTES ---
 
 @app.route('/reportes/generador')
@@ -1037,6 +1494,110 @@ def generar_reporte():
                          fecha_inicio=fecha_inicio,
                          fecha_fin=fecha_fin,
                          fecha_generacion=datetime.now())
+
+
+@app.route('/reportes/exportar-pdf/<tipo_reporte>')
+@login_required
+@roles_required('ADMIN', 'TESORERO', 'PRESIDENTE')
+def exportar_reporte_pdf(tipo_reporte):
+    """Exportar reporte en formato PDF profesional"""
+    fecha_inicio = request.args.get('fecha_inicio')
+    fecha_fin = request.args.get('fecha_fin')
+    
+    # Solo validar fechas si el reporte las requiere
+    if tipo_reporte != 'morosos' and (not fecha_inicio or not fecha_fin):
+        flash("Fechas no especificadas", "danger")
+        return redirect(url_for('generador_reportes'))
+    
+    conn = get_db_connection()
+    if conn is None:
+        flash("Error de conexión", "danger")
+        return redirect(url_for('generador_reportes'))
+    
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        if tipo_reporte == 'ingresos':
+            cursor.execute("""
+                SELECT DATE(p.fecha_pago) as fecha, SUM(p.monto_pagado) as total
+                FROM pago p
+                WHERE p.fecha_pago BETWEEN %s AND %s
+                GROUP BY DATE(p.fecha_pago)
+                ORDER BY fecha DESC
+            """, (fecha_inicio, fecha_fin))
+            datos = cursor.fetchall()
+            
+            buffer = io.BytesIO()
+            generar_pdf_reporte_ingresos(buffer, datos, fecha_inicio, fecha_fin)
+            buffer.seek(0)
+            
+            nombre_archivo = f"Reporte_Ingresos_{fecha_inicio}_{fecha_fin}.pdf"
+            
+        elif tipo_reporte == 'morosos':
+            cursor.execute("""
+                SELECT c.nombre, c.apellido, c.no_contador, s.nombre_sector,
+                       COUNT(l.id_lectura) as facturas_pendientes,
+                       SUM(l.monto_total) as deuda_total,
+                       MIN(l.fecha_lectura) as fecha_mas_antigua
+                FROM cliente c
+                JOIN lectura l ON c.id_cliente = l.id_cliente
+                JOIN sector s ON c.id_sector = s.id_sector
+                WHERE l.estado_pago = 'PENDIENTE'
+                GROUP BY c.id_cliente
+                ORDER BY deuda_total DESC
+            """)
+            datos = cursor.fetchall()
+            
+            buffer = io.BytesIO()
+            generar_pdf_reporte_morosos(buffer, datos)
+            buffer.seek(0)
+            
+            nombre_archivo = f"Reporte_Morosos_{datetime.now().strftime('%Y%m%d')}.pdf"
+            
+        elif tipo_reporte == 'consumo':
+            cursor.execute("""
+                SELECT c.nombre, c.apellido, c.no_contador, s.nombre_sector,
+                       AVG(l.consumo_m3) as consumo_promedio,
+                       MAX(l.consumo_m3) as consumo_maximo,
+                       MIN(l.consumo_m3) as consumo_minimo
+                FROM cliente c
+                JOIN lectura l ON c.id_cliente = l.id_cliente
+                JOIN sector s ON c.id_sector = s.id_sector
+                WHERE l.fecha_lectura BETWEEN %s AND %s
+                GROUP BY c.id_cliente
+                ORDER BY consumo_promedio DESC
+            """, (fecha_inicio, fecha_fin))
+            datos = cursor.fetchall()
+            
+            buffer = io.BytesIO()
+            generar_pdf_reporte_consumo(buffer, datos, fecha_inicio, fecha_fin)
+            buffer.seek(0)
+            
+            nombre_archivo = f"Reporte_Consumo_{fecha_inicio}_{fecha_fin}.pdf"
+            
+        else:
+            flash("Tipo de reporte no válido", "danger")
+            cursor.close()
+            conn.close()
+            return redirect(url_for('generador_reportes'))
+        
+        cursor.close()
+        conn.close()
+        
+        return send_file(
+            buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=nombre_archivo
+        )
+        
+    except Exception as e:
+        flash(f"Error al generar PDF: {str(e)}", "danger")
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+        return redirect(url_for('generador_reportes'))
 
 
 @app.route('/reportes/individual')
@@ -1173,6 +1734,123 @@ def reporte_individual_cliente(id_cliente):
         flash(f"Error al generar reporte: {str(e)}", "danger")
         cursor.close()
         conn.close()
+        return redirect(url_for('reporte_individual_form'))
+
+
+@app.route('/reportes/individual/<int:id_cliente>/pdf')
+@login_required
+@roles_required('ADMIN', 'TESORERO', 'PRESIDENTE')
+def exportar_reporte_individual_pdf(id_cliente):
+    """Exportar reporte individual en formato PDF profesional"""
+    conn = get_db_connection()
+    if conn is None:
+        flash("Error de conexión", "danger")
+        return redirect(url_for('generador_reportes'))
+    
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Información del cliente
+        cursor.execute("""
+            SELECT c.*, s.nombre_sector
+            FROM cliente c
+            JOIN sector s ON c.id_sector = s.id_sector
+            WHERE c.id_cliente = %s
+        """, (id_cliente,))
+        cliente = cursor.fetchone()
+        
+        if not cliente:
+            flash("Cliente no encontrado", "danger")
+            cursor.close()
+            conn.close()
+            return redirect(url_for('reporte_individual_form'))
+        
+        # Historial de lecturas
+        cursor.execute("""
+            SELECT 
+                l.id_lectura,
+                l.fecha_lectura,
+                l.lectura_anterior,
+                l.lectura_actual,
+                l.consumo_m3,
+                l.monto_total,
+                l.estado_pago,
+                CONCAT(u.nombre, ' ', u.apellido) as lector
+            FROM lectura l
+            JOIN usuario u ON l.id_usuario_lector = u.id_usuario
+            WHERE l.id_cliente = %s
+            ORDER BY l.fecha_lectura DESC
+        """, (id_cliente,))
+        lecturas = cursor.fetchall()
+        
+        # Historial de pagos
+        cursor.execute("""
+            SELECT 
+                p.id_pago,
+                p.fecha_pago,
+                p.monto_pagado,
+                l.fecha_lectura,
+                l.consumo_m3,
+                CONCAT(u.nombre, ' ', u.apellido) as receptor
+            FROM pago p
+            JOIN lectura l ON p.id_lectura = l.id_lectura
+            JOIN usuario u ON p.id_usuario_receptor = u.id_usuario
+            WHERE l.id_cliente = %s
+            ORDER BY p.fecha_pago DESC
+        """, (id_cliente,))
+        pagos = cursor.fetchall()
+        
+        # Estadísticas del cliente
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_lecturas,
+                COALESCE(AVG(consumo_m3), 0) as consumo_promedio,
+                COALESCE(MAX(consumo_m3), 0) as consumo_maximo,
+                COALESCE(MIN(consumo_m3), 0) as consumo_minimo,
+                COALESCE(SUM(CASE WHEN estado_pago = 'PENDIENTE' THEN monto_total ELSE 0 END), 0) as deuda_total,
+                COALESCE(SUM(CASE WHEN estado_pago = 'PAGADO' THEN monto_total ELSE 0 END), 0) as total_pagado
+            FROM lectura
+            WHERE id_cliente = %s
+        """, (id_cliente,))
+        estadisticas = cursor.fetchone()
+        
+        # Facturas pendientes
+        cursor.execute("""
+            SELECT 
+                id_lectura,
+                fecha_lectura,
+                consumo_m3,
+                monto_total,
+                DATEDIFF(CURDATE(), fecha_lectura) as dias_mora
+            FROM lectura
+            WHERE id_cliente = %s AND estado_pago = 'PENDIENTE'
+            ORDER BY fecha_lectura ASC
+        """, (id_cliente,))
+        facturas_pendientes = cursor.fetchall()
+        
+        # Generar PDF
+        buffer = io.BytesIO()
+        generar_pdf_reporte_individual(buffer, cliente, lecturas, pagos, estadisticas, facturas_pendientes)
+        buffer.seek(0)
+        
+        nombre_archivo = f"Reporte_Individual_{cliente['no_contador']}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        
+        cursor.close()
+        conn.close()
+        
+        return send_file(
+            buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=nombre_archivo
+        )
+        
+    except Exception as e:
+        flash(f"Error al generar PDF: {str(e)}", "danger")
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
         return redirect(url_for('reporte_individual_form'))
 
 
